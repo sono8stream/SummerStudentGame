@@ -15,7 +15,7 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     string message;
     [SerializeField]
-    Transform choicesT;
+    Transform choicesT, commandsT;
 
     int textLim = 3;//テキスト表示までのウェイト
     int tSetIndex;
@@ -86,6 +86,9 @@ public class TextLoader : MonoBehaviour
             {
                 switch (regularExpression[sTemp])
                 {
+                    case (int)RegularExpressions.イベントエンド:
+                        messagePred = EndEvent;
+                        break;
                     case (int)RegularExpressions.キー待ち文字初期化:
                         messagePred = WaitInitialize;
                         break;
@@ -104,6 +107,9 @@ public class TextLoader : MonoBehaviour
                     case (int)RegularExpressions.選択肢待ち:
                         messagePred = SetChoices;
                         break;
+                    case (int)RegularExpressions.ジャンプ:
+                        messagePred = JumpLabel;
+                        break;
                     case (int)RegularExpressions.着地点:
                         messagePred = (string t) => { return true; };
                         break;
@@ -119,16 +125,25 @@ public class TextLoader : MonoBehaviour
     void InitializeRE()
     {
         regularExpression = new Dictionary<string, int>();
+        regularExpression.Add("[e]", -1);
         regularExpression.Add("[r]", 0);
         regularExpression.Add("[w]", 1);
         regularExpression.Add("[i]", 2);
         regularExpression.Add("[t]", 3);
         regularExpression.Add("[c]", 4);
         regularExpression.Add("[s]", 5);
-        regularExpression.Add("[a]", 6);
+        regularExpression.Add("[j]", 6);
+        regularExpression.Add("[a]", 7);
     }
 
     #region 文字処理メソッド
+    bool EndEvent(string text)
+    {
+        messageText.transform.parent.gameObject.SetActive(false);
+        commandsT.gameObject.SetActive(true);
+        return true;
+    }
+
     bool WriteText(string text)
     {
         if (textLim <= textCount)
@@ -209,8 +224,8 @@ public class TextLoader : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)
             && selectIndex + lineChoices < choiceCount)
         {
-            selectIndex = lineChoices <= selectIndex
-                ? selectIndex - lineChoices : selectIndex + lineChoices;
+            selectIndex = lineChoices <= selectIndex || choiceCount <= lineChoices
+                ? selectIndex % lineChoices : selectIndex + lineChoices;
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
@@ -219,16 +234,26 @@ public class TextLoader : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.Space))
         {
-            foreach(Transform t in choicesT)
+            JumpIndex(choicesT.GetChild(selectIndex).GetChild(0)
+                .GetComponent<Text>().text);
+
+            foreach (Transform t in choicesT)
             {
                 t.gameObject.SetActive(false);
             }
+            selectIndex = 0;
             choiceCount = 0;
             return true;
         }
 
         SelectChoice(true);
         return false;
+    }
+
+    bool JumpLabel(string text)
+    {
+        JumpIndex(text.Substring(3));
+        return true;
     }
     #endregion
 
@@ -237,10 +262,24 @@ public class TextLoader : MonoBehaviour
         Color c = on ? Color.red : Color.white;
         choicesT.GetChild(selectIndex).GetComponent<Image>().color = c;
     }
+
+    void JumpIndex(string text)//特定のラベルまでジャンプします
+    {
+        string t = "[a]" + text;
+        for (int i = messageIndex; i < messageCacheList.Length; i++)
+        {
+            if(t.Equals(messageCacheList[i]))
+            {
+                messageIndex = i - 1;
+                return;
+            }
+        }
+    }
 }
 
 public enum RegularExpressions
 {
-    キー待ち文字初期化,キー待ち,文字初期化,速度変更,選択肢追加,選択肢待ち,
-    着地点
+    イベントエンド = -1,
+    キー待ち文字初期化, キー待ち, 文字初期化, 速度変更, 選択肢追加, 選択肢待ち,
+    ジャンプ, 着地点
 }
