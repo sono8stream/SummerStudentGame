@@ -13,10 +13,11 @@ public class Command : MonoBehaviour {
 
     int selectIndex;
 
-	// Use this for initialization
-	void Start () {
-		
-	}
+    // Use this for initialization
+    void Start()
+    {
+
+    }
 
     // Update is called once per frame
     void Update()
@@ -34,7 +35,7 @@ public class Command : MonoBehaviour {
         }
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
         {
-            selectIndex =   lineCommands<= selectIndex
+            selectIndex = lineCommands <= selectIndex
                 ? selectIndex % lineCommands : selectIndex + lineCommands;
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow))

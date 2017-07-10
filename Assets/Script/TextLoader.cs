@@ -8,8 +8,8 @@ using UnityEngine.UI;
 
 public class TextLoader : MonoBehaviour
 {
-    [SerializeField]
-    TextAsset textSet;
+    public TextAsset textSet;
+
     [SerializeField]
     Text messageText, dateText, weatherText;
     [SerializeField]
@@ -30,16 +30,19 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     string[] messageCacheList;
     Dictionary<string, int> regularExpression;
+    Dictionary<string, int> variableDict;
     Predicate<string> messagePred;
+
+    UserData uData;
 
     // Use this for initialization
     void Start()
     {
         messageText.text = "";
         Debug.Log(textSet.text);
-        messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
-        InitializeRE();
-        CheckRegular(messageCacheList[messageIndex]);
+        InitializeLoadMessage();
+
+        uData = new UserData();
     }
 
     // Update is called once per frame
@@ -122,6 +125,15 @@ public class TextLoader : MonoBehaviour
         }
     }
 
+    public void InitializeLoadMessage()
+    {
+        messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
+        InitializeRE();
+        InitializeVD();
+        messageText.transform.parent.gameObject.SetActive(true);
+        CheckRegular(messageCacheList[messageIndex]);
+    }
+
     void InitializeRE()
     {
         regularExpression = new Dictionary<string, int>();
@@ -134,6 +146,15 @@ public class TextLoader : MonoBehaviour
         regularExpression.Add("[s]", 5);
         regularExpression.Add("[j]", 6);
         regularExpression.Add("[a]", 7);
+        regularExpression.Add("[h]", 8);
+    }
+
+    void InitializeVD()//変数辞典
+    {
+        variableDict = new Dictionary<string, int>();
+        variableDict.Add("[日にち]", 0);
+        variableDict.Add("[時間]", 1);
+        variableDict.Add("[現在地]", 2);
     }
 
     #region 文字処理メソッド
@@ -275,11 +296,45 @@ public class TextLoader : MonoBehaviour
             }
         }
     }
+
+    bool ChangeVariable(string text)
+    {
+        string tex = text.Split(']')[1];
+        char itr = tex[0];
+        int value = int.Parse(tex.Substring(1));
+
+        switch(itr)
+        {
+            case '+':
+
+                break;
+            case '-':
+
+                break;
+            case '*':
+
+                break;
+            case '/':
+
+                break;
+            case '=':
+
+                break;
+        }
+        return true;
+    }
+
+    
 }
 
 public enum RegularExpressions
 {
     イベントエンド = -1,
     キー待ち文字初期化, キー待ち, 文字初期化, 速度変更, 選択肢追加, 選択肢待ち,
-    ジャンプ, 着地点
+    ジャンプ, 着地点, 変数呼び出し
+}
+
+public enum VariableNames
+{
+    日数 = 0, 時間, 現在地
 }
