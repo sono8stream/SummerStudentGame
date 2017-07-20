@@ -11,13 +11,13 @@ public class TextLoader : MonoBehaviour
     public TextAsset textSet;
 
     [SerializeField]
-    Text messageText, dateText, weatherText;
+    Text messageText, dateText, timeText, weatherText;
     [SerializeField]
     string message;
     [SerializeField]
     Transform choicesT, commandsT;
 
-    int textLim = 3;//テキスト表示までのウェイト
+    int textLim = 2;//テキスト表示までのウェイト
     int tSetIndex;
     int messageIndex;
     int letterIndex;
@@ -30,7 +30,7 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     string[] messageCacheList;
     Dictionary<string, int> regularExpression;
-    Dictionary<string, int> variableDict;
+    Dictionary<string, IntVariable> variableDict;
     Predicate<string> messagePred;
 
     UserData uData;
@@ -116,6 +116,12 @@ public class TextLoader : MonoBehaviour
                     case (int)RegularExpressions.着地点:
                         messagePred = (string t) => { return true; };
                         break;
+                    case (int)RegularExpressions.変数呼び出し:
+                        messagePred = ChangeVariable;
+                        break;
+                    case (int)RegularExpressions.日付表示変更:
+                        messagePred = UpdateDate;
+                        break;
                 }
             }
             else//普通にメッセージ表示
@@ -147,18 +153,19 @@ public class TextLoader : MonoBehaviour
         regularExpression.Add("[j]", 6);
         regularExpression.Add("[a]", 7);
         regularExpression.Add("[h]", 8);
+        regularExpression.Add("[d]", 9);
     }
 
-    void InitializeVD()//変数辞典
+    void InitializeVD()//変数辞典,[h]変数名:の形で指定可能
     {
-        variableDict = new Dictionary<string, int>();
-        variableDict.Add("[日にち]", 0);
-        variableDict.Add("[時間]", 1);
-        variableDict.Add("[現在地]", 2);
+        variableDict = new Dictionary<string, IntVariable>();
+        variableDict.Add("日数", new IntVariable(1));
+        variableDict.Add("時間", new IntVariable(10));
+        variableDict.Add("現在地", new IntVariable(0));
     }
 
     #region 文字処理メソッド
-    bool EndEvent(string text)
+    bool EndEvent(string text)//[e]
     {
         messageText.transform.parent.gameObject.SetActive(false);
         commandsT.gameObject.SetActive(true);
@@ -178,7 +185,7 @@ public class TextLoader : MonoBehaviour
             textCount++;
         }
 
-        if(letterIndex == text.Length)
+        if (letterIndex == text.Length)
         {
             letterIndex = 0;
             messageText.text += "\r\n";
@@ -190,9 +197,9 @@ public class TextLoader : MonoBehaviour
         }
     }
 
-    bool WaitInitialize(string text)
+    bool WaitInitialize(string text)//[r]
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             messageText.text = "";
             return true;
@@ -200,7 +207,7 @@ public class TextLoader : MonoBehaviour
         return false;
     }
 
-    bool Wait(string text)
+    bool Wait(string text)//[w]
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -209,13 +216,13 @@ public class TextLoader : MonoBehaviour
         return false;
     }
 
-    bool Initialize(string text)
+    bool Initialize(string text)//[i]
     {
         messageText.text = "";
         return true;
     }
 
-    bool ChangeSpeed(string text)//文字速度変更
+    bool ChangeSpeed(string text)//[t]数値で文字速度変更, 大きいほど遅い(def=2)
     {
         string t = text.Substring(3);
         textLim = int.Parse(t);
@@ -223,7 +230,7 @@ public class TextLoader : MonoBehaviour
         return true;
     }
 
-    bool AddChoice(string text)
+    bool AddChoice(string text)//[c]
     {
         if (6 <= choiceCount) { return true; }
 
@@ -234,7 +241,7 @@ public class TextLoader : MonoBehaviour
         return true;
     }
 
-    bool SetChoices(string text)
+    bool SetChoices(string text)//[s]
     {
         SelectChoice(false);
 
@@ -253,7 +260,7 @@ public class TextLoader : MonoBehaviour
             selectIndex = 0 < selectIndex ? selectIndex - 1 : choiceCount - 1;
         }
 
-        if(Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             JumpIndex(choicesT.GetChild(selectIndex).GetChild(0)
                 .GetComponent<Text>().text);
@@ -271,9 +278,56 @@ public class TextLoader : MonoBehaviour
         return false;
     }
 
-    bool JumpLabel(string text)
+    bool JumpLabel(string text)//[j]
     {
         JumpIndex(text.Substring(3));
+        return true;
+    }
+
+    bool ChangeVariable(string text)//[h] 変数名:の形で指定可能
+    {
+        IntVariable var;
+        string tex = text.Split(']')[1];
+        string name = tex.Split(':')[0];
+
+        if (variableDict.ContainsKey(name))
+        {
+            var = variableDict[name];
+        }
+        else
+        {
+            return true;
+        }
+
+        tex = tex.Split(':')[1];
+        char itr = tex[0];
+        int value = int.Parse(tex.Substring(1));
+
+        switch (itr)
+        {
+            case '+':
+                var.value += value;
+                break;
+            case '-':
+                var.value -= value;
+                break;
+            case '*':
+                var.value *= value;
+                break;
+            case '/':
+                var.value /= value;
+                break;
+            case '=':
+                var.value = value;
+                break;
+        }
+        return true;
+    }
+
+    bool UpdateDate(string text)//[d]
+    {
+        dateText.text = variableDict["日数"].value.ToString() + "日目";
+        timeText.text = variableDict["時間"].value.ToString() + ":00";
         return true;
     }
     #endregion
@@ -284,54 +338,25 @@ public class TextLoader : MonoBehaviour
         choicesT.GetChild(selectIndex).GetComponent<Image>().color = c;
     }
 
-    void JumpIndex(string text)//特定のラベルまでジャンプします
+    void JumpIndex(string text)//特定のラベルまでジャンプします,[j]
     {
         string t = "[a]" + text;
         for (int i = messageIndex; i < messageCacheList.Length; i++)
         {
-            if(t.Equals(messageCacheList[i]))
+            if (t.Equals(messageCacheList[i]))
             {
                 messageIndex = i - 1;
                 return;
             }
         }
     }
-
-    bool ChangeVariable(string text)
-    {
-        string tex = text.Split(']')[1];
-        char itr = tex[0];
-        int value = int.Parse(tex.Substring(1));
-
-        switch(itr)
-        {
-            case '+':
-
-                break;
-            case '-':
-
-                break;
-            case '*':
-
-                break;
-            case '/':
-
-                break;
-            case '=':
-
-                break;
-        }
-        return true;
-    }
-
-    
 }
 
 public enum RegularExpressions
 {
     イベントエンド = -1,
     キー待ち文字初期化, キー待ち, 文字初期化, 速度変更, 選択肢追加, 選択肢待ち,
-    ジャンプ, 着地点, 変数呼び出し
+    ジャンプ, 着地点, 変数呼び出し, 日付表示変更
 }
 
 public enum VariableNames
