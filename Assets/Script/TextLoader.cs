@@ -11,7 +11,7 @@ public class TextLoader : MonoBehaviour
     public TextAsset textSet;
 
     [SerializeField]
-    Text messageText, dateText, timeText, weatherText;
+    Text messageText, stamText, reachText, dateText, timeText, weatherText;
     [SerializeField]
     string message;
     [SerializeField]
@@ -33,16 +33,12 @@ public class TextLoader : MonoBehaviour
     Dictionary<string, IntVariable> variableDict;
     Predicate<string> messagePred;
 
-    UserData uData;
-
     // Use this for initialization
     void Start()
     {
         messageText.text = "";
         Debug.Log(textSet.text);
         InitializeLoadMessage();
-
-        uData = new UserData();
     }
 
     // Update is called once per frame
@@ -120,7 +116,7 @@ public class TextLoader : MonoBehaviour
                         messagePred = ChangeVariable;
                         break;
                     case (int)RegularExpressions.日付表示変更:
-                        messagePred = UpdateDate;
+                        messagePred = UpdateStatus;
                         break;
                 }
             }
@@ -159,9 +155,11 @@ public class TextLoader : MonoBehaviour
     void InitializeVD()//変数辞典,[h]変数名:の形で指定可能
     {
         variableDict = new Dictionary<string, IntVariable>();
-        variableDict.Add("日数", new IntVariable(1));
-        variableDict.Add("時間", new IntVariable(10));
-        variableDict.Add("現在地", new IntVariable(0));
+        variableDict.Add("体力", UserData.instance.hp);
+        variableDict.Add("最大体力", UserData.instance.mHp);
+        variableDict.Add("到達度", UserData.instance.reach);
+        variableDict.Add("日数", UserData.instance.day);
+        variableDict.Add("時間", UserData.instance.hour);
     }
 
     #region 文字処理メソッド
@@ -324,8 +322,11 @@ public class TextLoader : MonoBehaviour
         return true;
     }
 
-    bool UpdateDate(string text)//[d]
+    bool UpdateStatus(string text)//[d]
     {
+        stamText.text = variableDict["体力"].value.ToString() + "/"
+            + variableDict["最大体力"].value.ToString();
+        reachText.text = variableDict["到達度"].value.ToString() + "%";
         dateText.text = variableDict["日数"].value.ToString() + "日目";
         timeText.text = variableDict["時間"].value.ToString() + ":00";
         return true;
