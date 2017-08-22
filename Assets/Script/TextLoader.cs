@@ -42,6 +42,8 @@ public class TextLoader : MonoBehaviour
     {
         messageText.text = "";
         Debug.Log(textSet.text);
+        InitializeRE();
+        InitializeVD();
         InitializeLoadMessage();
     }
 
@@ -148,9 +150,8 @@ public class TextLoader : MonoBehaviour
     {
         subVar = new int[10];
         messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
-        InitializeRE();
-        InitializeVD();
         messageText.transform.parent.gameObject.SetActive(true);
+        messageIndex = 0;
         CheckRegular(messageCacheList[messageIndex]);
     }
 
@@ -194,30 +195,34 @@ public class TextLoader : MonoBehaviour
 
     bool WriteText(string text)
     {
-        if (textLim <= textCount)
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (!WriteVariable(text))//変数呼び出し
-            {
-                messageText.text += text[letterIndex];
-                letterIndex++;
-            }
-            textCount = 0;
-        }
-        else
-        {
-            textCount++;
-        }
-
-        if (letterIndex == text.Length)
-        {
-            letterIndex = 0;
-            messageText.text += "\r\n";
+            while(WriteChar(text)){ }
             return true;
         }
         else
         {
-            return false;
+            if (textLim <= textCount)
+            {
+                if (!WriteVariable(text))//変数呼び出し
+                {
+                    messageText.text += text[letterIndex];
+                    letterIndex++;
+                }
+                if (letterIndex == text.Length)
+                {
+                    letterIndex = 0;
+                    messageText.text += "\r\n";
+                    return true;
+                }
+                textCount = 0;
+            }
+            else
+            {
+                textCount++;
+            }
         }
+        return false;
     }
 
     bool WaitInitialize(string text)//[r]
@@ -440,7 +445,7 @@ public class TextLoader : MonoBehaviour
                 break;
         }
 
-        if (flag)
+        if (!flag)
         {
             JumpIndex("分岐終点");
         }
@@ -448,6 +453,22 @@ public class TextLoader : MonoBehaviour
         return true;
     }
     #endregion
+
+    bool WriteChar(string text)
+    {
+        if (!WriteVariable(text))//変数呼び出し
+        {
+            messageText.text += text[letterIndex];
+            letterIndex++;
+        }
+        if (letterIndex == text.Length)
+        {
+            letterIndex = 0;
+            messageText.text += "\r\n";
+            return true;
+        }
+        return false;
+    }
 
     bool WriteVariable(string text)
     {
@@ -459,11 +480,13 @@ public class TextLoader : MonoBehaviour
             {
                 messageText.text += variableDict[t].value.ToString();
                 letterIndex += t.Length + 2;
+                return true;
             }
             else if (t.Length == 1 && 0 <= t[0] - '0' && t[0] - '0' <= 9)//予備変数
             {
                 messageText.text += subVar[t[0] - '0'].ToString();
                 letterIndex += 3;
+                return true;
             }
             else
             {
@@ -481,9 +504,9 @@ public class TextLoader : MonoBehaviour
         {
             val = variableDict[text].value;
         }
-        else if (text.Length == 1 && 0 <= text[0] - '0' && text[0] - '0' <= 9)//予備変数
+        else if (text[0] == '[' && 0 <= text[1] - '0' && text[1] - '0' <= 9)//予備変数
         {
-            val = subVar[text[0] - '0'];
+            val = subVar[text[1] - '0'];
         }
         else
         {

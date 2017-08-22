@@ -34,28 +34,23 @@ public class Command : MonoBehaviour {
 
     void MoveCommand()
     {
+        SelectChoice(false);
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            SelectChoice(false);
             selectIndex = selectIndex < commandCount - 1 ? selectIndex + 1 : 0;
             dscText.text = dscArray[selectIndex];
-            SelectChoice(true);
         }
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
         {
-            SelectChoice(false);
             selectIndex = lineCommands <= selectIndex
                 ? selectIndex % lineCommands : selectIndex + lineCommands;
             dscText.text = dscArray[selectIndex];
-            SelectChoice(true);
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            SelectChoice(false);
             selectIndex = 0 < selectIndex ? selectIndex - 1 : commandCount - 1;
             dscText.text = dscArray[selectIndex];
-            SelectChoice(true);
         }
 
         if (Input.GetKeyDown(KeyCode.Space))
@@ -65,10 +60,11 @@ public class Command : MonoBehaviour {
                 t.gameObject.SetActive(false);
             }*/
             CommandClick(selectIndex);
-            SelectChoice(false);
             selectIndex = 0;
             gameObject.SetActive(false);
         }
+
+        SelectChoice(true);
     }
     
     void SelectChoice(bool on)
