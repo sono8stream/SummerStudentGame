@@ -33,7 +33,7 @@ public class TextLoader : MonoBehaviour
     string[] messageCacheList;
     Dictionary<string, int> regularExpression;
     Dictionary<string, IntVariable> variableDict;
-    Predicate<string> messagePred;
+    Predicate<string> messagePred, subPred;
 
     int[] subVar;//予備変数
 
@@ -50,15 +50,26 @@ public class TextLoader : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (messageCacheList.Length == messageIndex) { return; }
-
-        if (messagePred(messageCacheList[messageIndex]))
+        if (messageIndex < messageCacheList.Length
+            && messagePred(messageCacheList[messageIndex]))
         {
-            messageIndex++;
-            if (messageIndex < messageCacheList.Length)
+            do
             {
-                CheckRegular(messageCacheList[messageIndex]);
+                messageIndex++;
+                if (messageIndex < messageCacheList.Length)
+                {
+                    subPred = CheckRegular(messageCacheList[messageIndex - 1]);
+                    messagePred = CheckRegular(messageCacheList[messageIndex]);
+
+                }
+                else
+                {
+                    break;
+                }
             }
+            while (subPred == WriteText
+            && messagePred == WriteText
+            && messagePred(messageCacheList[messageIndex]));
         }
     }
 
@@ -77,14 +88,10 @@ public class TextLoader : MonoBehaviour
         return textLine;
     }
 
-    void CheckRegular(string s)//正規表現のチェック
+    Predicate<string> CheckRegular(string s)//正規表現のチェック
     {
-        if (s.Length <= 2)
-        {
-            messagePred = WriteText;
-            return;
-        }
-        else
+        Predicate<string> messagePred = WriteText;
+        if (2 < s.Length)
         {
             string sTemp = s.Substring(0, 3);
             if (regularExpression.ContainsKey(sTemp))
@@ -139,11 +146,8 @@ public class TextLoader : MonoBehaviour
 
                 }
             }
-            else//普通にメッセージ表示
-            {
-                messagePred = WriteText;
-            }
         }
+        return messagePred;
     }
 
     public void InitializeLoadMessage()
@@ -152,7 +156,7 @@ public class TextLoader : MonoBehaviour
         messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
         messageText.transform.parent.gameObject.SetActive(true);
         messageIndex = 0;
-        CheckRegular(messageCacheList[messageIndex]);
+        messagePred = CheckRegular(messageCacheList[messageIndex]);
     }
 
     void InitializeRE()
@@ -197,13 +201,15 @@ public class TextLoader : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            while(WriteChar(text)){ }
+            while (!WriteChar(text)) { }
+            textCount = 0;
             return true;
         }
         else
         {
-            if (textLim <= textCount)
+            if (textCount == textLim)
             {
+                textCount = 0;
                 if (!WriteVariable(text))//変数呼び出し
                 {
                     messageText.text += text[letterIndex];
@@ -215,7 +221,6 @@ public class TextLoader : MonoBehaviour
                     messageText.text += "\r\n";
                     return true;
                 }
-                textCount = 0;
             }
             else
             {
@@ -230,16 +235,76 @@ public class TextLoader : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             messageText.text = "";
+            textCount = 0;
             return true;
         }
-        return false;
+
+        if (textCount == 0)
+        {
+            messageText.text
+                = messageText.text.Substring(0, messageText.text.Length - 2);
+            textCount++;
+        }
+        else if (textCount == 1)
+        {
+            messageText.text += "▼";
+            textCount++;
+        }
+        else if (textCount == textLim*20)
+        {
+            messageText.text
+                = messageText.text.Substring(0, messageText.text.Length - 1);
+            textCount++;
+        }
+        else if (textCount == textLim * 40)
+        {
+            textCount = 1;
+        }
+        else
+        {
+            textCount++;
+        }
+            return false;
     }
 
     bool Wait(string text)//[w]
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            textCount = 0;
+            if (messageText.text[messageText.text.Length - 1] == '▼')
+            {
+                messageText.text
+                    = messageText.text.Substring(0, messageText.text.Length - 1);
+            }
+            messageText.text += "\r\n";
             return true;
+        }
+
+        if (textCount == 0)
+        {
+            messageText.text
+                = messageText.text.Substring(0, messageText.text.Length - 2);
+            textCount++;
+        }
+        else if(textCount==1)
+        {
+            messageText.text += "▼";
+            textCount++;
+        }
+        else if (textCount == textLim*20)
+        {
+            messageText.text
+                = messageText.text.Substring(0, messageText.text.Length - 1);
+            textCount++;
+        }
+        else if (textCount == textLim * 40)
+        {
+            textCount = 1;
+        }
+        else
+        {
+            textCount++;
         }
         return false;
     }
