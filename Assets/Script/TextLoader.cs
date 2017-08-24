@@ -28,8 +28,7 @@ public class TextLoader : MonoBehaviour
     int lineChoices = 3;
     int selectIndex;//選択中選択肢番号
     int choiceCount;
-
-    [SerializeField]
+    
     string[] messageCacheList;
     Dictionary<string, int> regularExpression;
     Dictionary<string, IntVariable> variableDict;
@@ -50,6 +49,8 @@ public class TextLoader : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(messageIndex == messageCacheList.Length) { return; }
+
         if (messageIndex < messageCacheList.Length
             && messagePred(messageCacheList[messageIndex]))
         {
@@ -71,6 +72,8 @@ public class TextLoader : MonoBehaviour
             && messagePred == WriteText
             && messagePred(messageCacheList[messageIndex]));
         }
+
+        HideWin();
     }
 
     string LoadTextLine()
@@ -185,6 +188,8 @@ public class TextLoader : MonoBehaviour
         variableDict.Add("体力", UserData.instance.hp);
         variableDict.Add("最大体力", UserData.instance.mHp);
         variableDict.Add("到達度", UserData.instance.reach);
+        variableDict.Add("カルマ", UserData.instance.karman);
+        variableDict.Add("カースト", UserData.instance.caste);
         variableDict.Add("日数", UserData.instance.day);
         variableDict.Add("時間", UserData.instance.hour);
     }
@@ -192,6 +197,7 @@ public class TextLoader : MonoBehaviour
     #region 文字処理メソッド
     bool EndEvent(string text)//[e]
     {
+        Highlight("[l]f");
         messageText.transform.parent.gameObject.SetActive(false);
         commandsT.gameObject.SetActive(true);
         return true;
@@ -199,7 +205,7 @@ public class TextLoader : MonoBehaviour
 
     bool WriteText(string text)
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space)||Input.GetKey(KeyCode.X))
         {
             while (!WriteChar(text)) { }
             textCount = 0;
@@ -232,13 +238,6 @@ public class TextLoader : MonoBehaviour
 
     bool WaitInitialize(string text)//[r]
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            messageText.text = "";
-            textCount = 0;
-            return true;
-        }
-
         if (textCount == 0)
         {
             messageText.text
@@ -264,23 +263,18 @@ public class TextLoader : MonoBehaviour
         {
             textCount++;
         }
-            return false;
+
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKey(KeyCode.X))
+        {
+            messageText.text = "";
+            textCount = 0;
+            return true;
+        }
+        return false;
     }
 
     bool Wait(string text)//[w]
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            textCount = 0;
-            if (messageText.text[messageText.text.Length - 1] == '▼')
-            {
-                messageText.text
-                    = messageText.text.Substring(0, messageText.text.Length - 1);
-            }
-            messageText.text += "\r\n";
-            return true;
-        }
-
         if (textCount == 0)
         {
             messageText.text
@@ -305,6 +299,18 @@ public class TextLoader : MonoBehaviour
         else
         {
             textCount++;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKey(KeyCode.X))
+        {
+            textCount = 0;
+            if (messageText.text[messageText.text.Length - 1] == '▼')
+            {
+                messageText.text
+                    = messageText.text.Substring(0, messageText.text.Length - 1);
+            }
+            messageText.text += "\r\n";
+            return true;
         }
         return false;
     }
@@ -464,22 +470,25 @@ public class TextLoader : MonoBehaviour
     bool Highlight(string text)
     {
         char c = text.Split(']')[1][0];
-        if(c=='l')
+        switch(c)
         {
-            leftChara.color = Color.white;
-            rightChara.color = Color.gray;
+            case 'l':
+                leftChara.color = Color.white;
+                rightChara.color = Color.gray;
+                break;
+            case 'r':
+                rightChara.color = Color.white;
+                leftChara.color = Color.gray;
+                break;
+            case 'n':
+                rightChara.color = Color.gray;
+                leftChara.color = Color.gray;
+                break;
+            case 'f':
+                rightChara.color = Color.white;
+                leftChara.color = Color.white;
+                break;
         }
-        else if(c=='r')
-        {
-            rightChara.color = Color.white;
-            leftChara.color = Color.gray;
-        }
-        else if(c=='n')
-        {
-            rightChara.color = Color.gray;
-            leftChara.color = Color.gray;
-        }
-
         return true;
     }
 
@@ -488,33 +497,35 @@ public class TextLoader : MonoBehaviour
         string[] elem = text.Substring(3).Split(':');
         int val1 = TextToVariable(elem[0]);
         int val2 = TextToVariable(elem[2]);
-        char itr = elem[1][0];
+        string itr = elem[1];
 
         bool flag = false;
         switch (itr)
         {
-            case '<':
+            case "<":
                 flag = val1 < val2;
                 break;
-            case '>':
+            case ">":
                 flag = val1 > val2;
                 break;
-            case '=':
+            case "=":
                 flag = val1 == val2;
                 break;
-            case '≦':
+            case "<=":
                 flag = val1 <= val2;
                 break;
-            case '≧':
+            case ">=":
                 flag = val1 >= val2;
                 break;
         }
 
         if (!flag)
         {
-            JumpIndex("分岐終点");
+            string t = "分岐終点";
+            if (elem.Length == 4) { t += elem[3]; }
+            JumpIndex(t);
         }
-        Debug.Log(val2);
+        Debug.Log(val1);
         return true;
     }
     #endregion
@@ -597,6 +608,11 @@ public class TextLoader : MonoBehaviour
                 return;
             }
         }
+    }
+
+    void HideWin()
+    {
+        messageText.transform.parent.gameObject.SetActive(!Input.GetKey(KeyCode.Z));
     }
 }
 
