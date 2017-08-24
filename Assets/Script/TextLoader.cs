@@ -17,13 +17,23 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     Transform choicesT, commandsT;
     [SerializeField]
-    Image leftChara, rightChara;//キャラ画像
+    Image back1, back2;//背景画像
+    [SerializeField]
+    Image leftChara, leftChara2;//キャラ画像1
+    [SerializeField]
+    Image rightChara, rightChara2;//キャラ画像2
+    [SerializeField]
+    Sprite[] backSprites, charaSprites;
+    [SerializeField]
+    AudioClip[] bgms;
 
     int textLim = 2;//テキスト表示までのウェイト
     int tSetIndex;
     int messageIndex;
     int letterIndex;
     int textCount;
+    int fadeLim;
+    int fadeCnt;
 
     int lineChoices = 3;
     int selectIndex;//選択中選択肢番号
@@ -32,6 +42,9 @@ public class TextLoader : MonoBehaviour
     string[] messageCacheList;
     Dictionary<string, int> regularExpression;
     Dictionary<string, IntVariable> variableDict;
+    Dictionary<string, Sprite> backSpDict;
+    Dictionary<string, Sprite> charaSpDict;
+    Dictionary<string, AudioClip> bgmDict;
     Predicate<string> messagePred, subPred;
 
     int[] subVar;//予備変数
@@ -40,10 +53,14 @@ public class TextLoader : MonoBehaviour
     void Start()
     {
         messageText.text = "";
-        Debug.Log(textSet.text);
         InitializeRE();
         InitializeVD();
+        InitializeBD();
+        InitializeCD();
         InitializeLoadMessage();
+
+        fadeLim = 0;
+        fadeCnt = 0;
     }
 
     // Update is called once per frame
@@ -146,6 +163,12 @@ public class TextLoader : MonoBehaviour
                     case (int)RegularExpressions.条件判定:
                         messagePred = CheckFlag;
                         break;
+                    case (int)RegularExpressions.背景画像変更:
+                        messagePred = ChangeBackSprite;
+                        break;
+                    case (int)RegularExpressions.キャラ画像変更:
+                        messagePred = ChangeCharaSprite;
+                        break;
 
                 }
             }
@@ -158,6 +181,7 @@ public class TextLoader : MonoBehaviour
         subVar = new int[10];
         messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
         messageText.transform.parent.gameObject.SetActive(true);
+        messageText.text = "";
         messageIndex = 0;
         messagePred = CheckRegular(messageCacheList[messageIndex]);
     }
@@ -180,6 +204,8 @@ public class TextLoader : MonoBehaviour
         regularExpression.Add("[n]", 11);
         regularExpression.Add("[l]", 12);
         regularExpression.Add("[f]", 13);
+        regularExpression.Add("[b]", 14);
+        regularExpression.Add("[m]", 15);
     }
 
     void InitializeVD()//変数辞典,[h]変数名:の形で指定可能
@@ -192,6 +218,36 @@ public class TextLoader : MonoBehaviour
         variableDict.Add("カースト", UserData.instance.caste);
         variableDict.Add("日数", UserData.instance.day);
         variableDict.Add("時間", UserData.instance.hour);
+    }
+
+    void InitializeBD()//背景画像辞典
+    {
+        backSpDict = new Dictionary<string, Sprite>();
+        backSpDict.Add("消去", backSprites[0]);
+        backSpDict.Add("実家内", backSprites[1]);
+        backSpDict.Add("村", backSprites[2]);
+        backSpDict.Add("入口", backSprites[3]);
+        backSpDict.Add("山中", backSprites[4]);
+        backSpDict.Add("山頂", backSprites[5]);
+        backSpDict.Add("宴", backSprites[6]);
+        backSpDict.Add("寺院", backSprites[7]);
+        backSpDict.Add("夜の森", backSprites[8]);
+        backSpDict.Add("夜の川", backSprites[9]);
+    }
+
+    void InitializeCD()//キャラ画像辞典
+    {
+        charaSpDict = new Dictionary<string, Sprite>();
+        charaSpDict.Add("消去", charaSprites[0]);
+        charaSpDict.Add("主人公", charaSprites[1]);
+        charaSpDict.Add("長", charaSprites[2]);
+        charaSpDict.Add("妹", charaSprites[3]);
+        charaSpDict.Add("山賊", charaSprites[4]);
+        charaSpDict.Add("登山者", charaSprites[5]);
+        charaSpDict.Add("ヒンドゥー教徒", charaSprites[6]);
+        charaSpDict.Add("レモン教徒", charaSprites[7]);
+        charaSpDict.Add("女神", charaSprites[8]);
+        charaSpDict.Add("化け物", charaSprites[9]);
     }
 
     #region 文字処理メソッド
@@ -238,6 +294,14 @@ public class TextLoader : MonoBehaviour
 
     bool WaitInitialize(string text)//[r]
     {
+        if (Input.GetKeyDown(KeyCode.Space) ||
+            (5 <= textCount && Input.GetKey(KeyCode.X)))
+        {
+            messageText.text = "";
+            textCount = 0;
+            return true;
+        }
+
         if (textCount == 0)
         {
             messageText.text
@@ -249,59 +313,28 @@ public class TextLoader : MonoBehaviour
             messageText.text += "▼";
             textCount++;
         }
-        else if (textCount == textLim*20)
+        else if (textCount == textLim * 25)
         {
             messageText.text
                 = messageText.text.Substring(0, messageText.text.Length - 1);
             textCount++;
         }
-        else if (textCount == textLim * 40)
+        else if (textCount == textLim * 45)
         {
-            textCount = 1;
+            messageText.text += "▼";
+            textCount = textLim * 5;
         }
         else
         {
             textCount++;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKey(KeyCode.X))
-        {
-            messageText.text = "";
-            textCount = 0;
-            return true;
         }
         return false;
     }
 
     bool Wait(string text)//[w]
     {
-        if (textCount == 0)
-        {
-            messageText.text
-                = messageText.text.Substring(0, messageText.text.Length - 2);
-            textCount++;
-        }
-        else if(textCount==1)
-        {
-            messageText.text += "▼";
-            textCount++;
-        }
-        else if (textCount == textLim*20)
-        {
-            messageText.text
-                = messageText.text.Substring(0, messageText.text.Length - 1);
-            textCount++;
-        }
-        else if (textCount == textLim * 40)
-        {
-            textCount = 1;
-        }
-        else
-        {
-            textCount++;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKey(KeyCode.X))
+        if (Input.GetKeyDown(KeyCode.Space) ||
+            (5 <= textCount && Input.GetKey(KeyCode.X)))
         {
             textCount = 0;
             if (messageText.text[messageText.text.Length - 1] == '▼')
@@ -311,6 +344,33 @@ public class TextLoader : MonoBehaviour
             }
             messageText.text += "\r\n";
             return true;
+        }
+
+        if (textCount == 0)
+        {
+            messageText.text
+                = messageText.text.Substring(0, messageText.text.Length - 2);
+            textCount++;
+        }
+        else if (textCount == 1)
+        {
+            messageText.text += "▼";
+            textCount++;
+        }
+        else if (textCount == textLim * 25)
+        {
+            messageText.text
+                = messageText.text.Substring(0, messageText.text.Length - 1);
+            textCount++;
+        }
+        else if (textCount == textLim * 45)
+        {
+            messageText.text += "▼";
+            textCount = textLim * 5;
+        }
+        else
+        {
+            textCount++;
         }
         return false;
     }
@@ -467,7 +527,7 @@ public class TextLoader : MonoBehaviour
         return true;
     }
     
-    bool Highlight(string text)
+    bool Highlight(string text)//[h], キャラハイライト
     {
         char c = text.Split(']')[1][0];
         switch(c)
@@ -526,6 +586,44 @@ public class TextLoader : MonoBehaviour
             JumpIndex(t);
         }
         Debug.Log(val1);
+        return true;
+    }
+
+    bool ChangeBackSprite(string text)//[b]画像名:時間, 背景画像変更,フェードあり
+    {
+        if (fadeCnt == 0)
+        {
+            string[] elem = text.Substring(3).Split(':');
+            if(!backSpDict.ContainsKey(elem[0])){ return true; }
+            back2.sprite = backSpDict[elem[0]];
+            fadeLim = int.Parse(elem[1]);
+        }
+        else if (fadeCnt == fadeLim)
+        {
+            back1.sprite = back2.sprite;
+            back1.color = Color.white;
+            back2.color = new Color(1, 1, 1, 0);
+            fadeCnt = 0;
+            return true;
+        }
+
+        fadeCnt++;
+        back1.color -= new Color(0, 0, 0, 1.0f * fadeCnt / fadeLim);
+        back2.color += new Color(0, 0, 0, 1.0f * fadeCnt / fadeLim);
+
+        return false;
+    }
+
+    bool ChangeCharaSprite(string text)//[m]左右:画像名:時間,キャラ画像変更,フェードあり
+    {
+        if (fadeCnt == 0)
+        {
+
+        }
+        else if (fadeCnt == fadeLim)
+        {
+
+        }
         return true;
     }
     #endregion
@@ -621,7 +719,7 @@ public enum RegularExpressions
     イベントエンド = -1,
     キー待ち文字初期化, キー待ち, 文字初期化, 速度変更, 選択肢追加, 選択肢待ち,
     ジャンプ, 着地点, 変数書き込み, 変数取得, 状態表示変更, 乱数取得, キャラ変更,
-    条件判定
+    条件判定, 背景画像変更, キャラ画像変更
 }
 
 public enum VariableNames

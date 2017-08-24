@@ -62,6 +62,7 @@ public class Command : MonoBehaviour {
             }*/
             CommandClick(selectIndex);
             selectIndex = 0;
+            dscText.text = dscArray[selectIndex];
             gameObject.SetActive(false);
         }
 
