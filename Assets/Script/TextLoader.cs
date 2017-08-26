@@ -34,6 +34,7 @@ public class TextLoader : MonoBehaviour
     int textCount;
     int fadeLim;
     int fadeCnt;
+    Image charaTemp, charaTemp2;
 
     int lineChoices = 3;
     int selectIndex;//選択中選択肢番号
@@ -594,7 +595,7 @@ public class TextLoader : MonoBehaviour
         if (fadeCnt == 0)
         {
             string[] elem = text.Substring(3).Split(':');
-            if(!backSpDict.ContainsKey(elem[0])){ return true; }
+            if (!backSpDict.ContainsKey(elem[0])) { return true; }
             back2.sprite = backSpDict[elem[0]];
             fadeLim = int.Parse(elem[1]);
         }
@@ -608,9 +609,8 @@ public class TextLoader : MonoBehaviour
         }
 
         fadeCnt++;
-        back1.color -= new Color(0, 0, 0, 1.0f * fadeCnt / fadeLim);
-        back2.color += new Color(0, 0, 0, 1.0f * fadeCnt / fadeLim);
-
+        back1.color -= new Color(0, 0, 0, 1.0f / fadeLim);
+        back2.color += new Color(0, 0, 0, 1.0f / fadeLim);
         return false;
     }
 
@@ -618,13 +618,36 @@ public class TextLoader : MonoBehaviour
     {
         if (fadeCnt == 0)
         {
+            string[] elem = text.Substring(3).Split(':');
+            if (!charaSpDict.ContainsKey(elem[1])) { return true; }
+            if (elem[0].Equals("l"))
+            {
+                charaTemp = leftChara;
+                charaTemp2 = leftChara2;
+            }
+            else
+            {
+                charaTemp = rightChara;
+                charaTemp2 = rightChara2;
+            }
 
+            charaTemp2.sprite = charaSpDict[elem[1]];
+            fadeLim = int.Parse(elem[2]);
         }
         else if (fadeCnt == fadeLim)
         {
-
+            charaTemp.sprite = charaTemp2.sprite;
+            charaTemp.color = Color.white;
+            charaTemp2.color = new Color(1, 1, 1, 0);
+            fadeCnt = 0;
+            return true;
         }
-        return true;
+
+        fadeCnt++;
+        charaTemp.color -= new Color(0, 0, 0, 1.0f  / fadeLim);
+        charaTemp2.color += new Color(0, 0, 0, 1.0f / fadeLim);
+
+        return false;
     }
     #endregion
 
