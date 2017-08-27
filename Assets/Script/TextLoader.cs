@@ -69,6 +69,8 @@ public class TextLoader : MonoBehaviour
     {
         if(messageIndex == messageCacheList.Length) { return; }
 
+        HideWin();
+
         if (messageIndex < messageCacheList.Length
             && messagePred(messageCacheList[messageIndex]))
         {
@@ -90,8 +92,6 @@ public class TextLoader : MonoBehaviour
             && messagePred == WriteText
             && messagePred(messageCacheList[messageIndex]));
         }
-
-        HideWin();
     }
 
     string LoadTextLine()

@@ -17,7 +17,7 @@
         hp = new IntVariable(mHp.value);
         reach = new IntVariable(0);
         mReach = new IntVariable(100);
-        karman = new IntVariable(50);
+        karman = new IntVariable(30);
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(20);
     }
