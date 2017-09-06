@@ -11,6 +11,11 @@ public class TextLoader : MonoBehaviour
     public TextAsset textSet;
 
     [SerializeField]
+    TextAsset summit, ending;
+    [SerializeField]
+    TextAsset[] randomEvents;
+
+    [SerializeField]
     Text messageText, stamText, reachText, dateText, timeText, weatherText;
     [SerializeField]
     string message;
@@ -40,8 +45,9 @@ public class TextLoader : MonoBehaviour
     int selectIndex;//選択中選択肢番号
     int choiceCount;
     
+    [SerializeField]
     string[] messageCacheList;
-    Dictionary<string, int> regularExpression;
+    Dictionary<string, Predicate<string>> regExp;
     Dictionary<string, IntVariable> variableDict;
     Dictionary<string, Sprite> backSpDict;
     Dictionary<string, Sprite> charaSpDict;
@@ -115,72 +121,19 @@ public class TextLoader : MonoBehaviour
         if (2 < s.Length)
         {
             string sTemp = s.Substring(0, 3);
-            if (regularExpression.ContainsKey(sTemp))
-            {
-                switch (regularExpression[sTemp])
-                {
-                    case (int)RegularExpressions.イベントエンド:
-                        messagePred = EndEvent;
-                        break;
-                    case (int)RegularExpressions.キー待ち文字初期化:
-                        messagePred = WaitInitialize;
-                        break;
-                    case (int)RegularExpressions.キー待ち:
-                        messagePred = Wait;
-                        break;
-                    case (int)RegularExpressions.文字初期化:
-                        messagePred = Initialize;
-                        break;
-                    case (int)RegularExpressions.速度変更:
-                        messagePred = ChangeSpeed;
-                        break;
-                    case (int)RegularExpressions.選択肢追加:
-                        messagePred = AddChoice;
-                        break;
-                    case (int)RegularExpressions.選択肢待ち:
-                        messagePred = SetChoices;
-                        break;
-                    case (int)RegularExpressions.ジャンプ:
-                        messagePred = JumpLabel;
-                        break;
-                    case (int)RegularExpressions.着地点:
-                        messagePred = (string t) => { return true; };
-                        break;
-                    case (int)RegularExpressions.変数書き込み:
-                        messagePred = ChangeVariable;
-                        break;
-                    case (int)RegularExpressions.変数取得:
-                        messagePred = GetVariable;
-                        break;
-                    case (int)RegularExpressions.状態表示変更:
-                        messagePred = UpdateStatus;
-                        break;
-                    case (int)RegularExpressions.乱数取得:
-                        messagePred = GetRandom;
-                        break;
-                    case (int)RegularExpressions.キャラ変更:
-                        messagePred = Highlight;
-                        break;
-                    case (int)RegularExpressions.条件判定:
-                        messagePred = CheckFlag;
-                        break;
-                    case (int)RegularExpressions.背景画像変更:
-                        messagePred = ChangeBackSprite;
-                        break;
-                    case (int)RegularExpressions.キャラ画像変更:
-                        messagePred = ChangeCharaSprite;
-                        break;
-
-                }
-            }
+            if (regExp.ContainsKey(sTemp))
+            { messagePred = regExp[sTemp]; }
         }
         return messagePred;
     }
 
-    public void InitializeLoadMessage()
+    public void InitializeLoadMessage(bool onTextSet=true)
     {
         subVar = new int[10];
-        messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
+        if (onTextSet)
+        {
+            messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
+        }
         messageText.transform.parent.gameObject.SetActive(true);
         messageText.text = "";
         messageIndex = 0;
@@ -189,24 +142,26 @@ public class TextLoader : MonoBehaviour
 
     void InitializeRE()
     {
-        regularExpression = new Dictionary<string, int>();
-        regularExpression.Add("[e]", -1);
-        regularExpression.Add("[r]", 0);
-        regularExpression.Add("[w]", 1);
-        regularExpression.Add("[i]", 2);
-        regularExpression.Add("[t]", 3);
-        regularExpression.Add("[c]", 4);
-        regularExpression.Add("[s]", 5);
-        regularExpression.Add("[j]", 6);
-        regularExpression.Add("[a]", 7);
-        regularExpression.Add("[h]", 8);
-        regularExpression.Add("[g]", 9);
-        regularExpression.Add("[d]", 10);
-        regularExpression.Add("[n]", 11);
-        regularExpression.Add("[l]", 12);
-        regularExpression.Add("[f]", 13);
-        regularExpression.Add("[b]", 14);
-        regularExpression.Add("[m]", 15);
+        regExp = new Dictionary<string, Predicate<string>>();
+        regExp.Add("[e]", EndEvent);
+        regExp.Add("[r]", WaitInitialize);
+        regExp.Add("[w]", Wait);
+        regExp.Add("[i]", Initialize);
+        regExp.Add("[t]", ChangeSpeed);
+        regExp.Add("[c]", AddChoice);
+        regExp.Add("[s]", SetChoices);
+        regExp.Add("[j]", JumpLabel);
+        regExp.Add("[a]", (string t) => { return true; });
+        regExp.Add("[h]", ChangeVariable);
+        regExp.Add("[g]", GetVariable);
+        regExp.Add("[d]", UpdateStatus);
+        regExp.Add("[n]", GetRandom);
+        regExp.Add("[l]", Highlight);
+        regExp.Add("[f]", CheckFlag);
+        regExp.Add("[b]", ChangeBackSprite);
+        regExp.Add("[m]", ChangeCharaSprite);
+        regExp.Add("[x]", SetItemChoices);
+        regExp.Add("[u]", UseItem);
     }
 
     void InitializeVD()//変数辞典,[h]変数名:の形で指定可能
@@ -257,6 +212,13 @@ public class TextLoader : MonoBehaviour
         Highlight("[l]f");
         messageText.transform.parent.gameObject.SetActive(false);
         commandsT.gameObject.SetActive(true);
+        return true;
+    }
+
+    bool CallNextEvent()//[] ,コマンド後イベント呼び出し
+    {
+        GetEventSet();
+        InitializeLoadMessage();
         return true;
     }
 
@@ -392,12 +354,12 @@ public class TextLoader : MonoBehaviour
 
     bool AddChoice(string text)//[c]
     {
-        if (6 <= choiceCount) { return true; }
+        if (9 <= choiceCount) { return true; }
 
-        choiceCount++;
-        Transform t = choicesT.GetChild(choiceCount - 1);
+        Transform t = choicesT.GetChild(choiceCount);
         t.gameObject.SetActive(true);
         t.FindChild("Text").GetComponent<Text>().text = text.Substring(3);
+        choiceCount++;
         return true;
     }
 
@@ -405,20 +367,7 @@ public class TextLoader : MonoBehaviour
     {
         SelectChoice(false);
 
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            selectIndex = selectIndex < choiceCount - 1 ? selectIndex + 1 : 0;
-        }
-        if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)
-            && selectIndex + lineChoices < choiceCount)
-        {
-            selectIndex = lineChoices <= selectIndex || choiceCount <= lineChoices
-                ? selectIndex % lineChoices : selectIndex + lineChoices;
-        }
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            selectIndex = 0 < selectIndex ? selectIndex - 1 : choiceCount - 1;
-        }
+        MoveChoice();
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -447,7 +396,7 @@ public class TextLoader : MonoBehaviour
     bool ChangeVariable(string text)//[h] 変数名:の形で指定可能
     {
         IntVariable var;
-        string tex = text.Split(']')[1];
+        string tex = text.Substring(3);
         string name = tex.Split(':')[0];
 
         if (variableDict.ContainsKey(name))
@@ -481,6 +430,16 @@ public class TextLoader : MonoBehaviour
                 var.value = value;
                 break;
         }
+
+        if(UserData.instance.mHp.value<UserData.instance.hp.value)
+        {
+            UserData.instance.hp.value = UserData.instance.mHp.value;
+        }
+        else if (UserData.instance.hp.value<0)
+        {
+            UserData.instance.hp.value = 0;
+        }
+
         return true;
     }
 
@@ -528,7 +487,7 @@ public class TextLoader : MonoBehaviour
         return true;
     }
     
-    bool Highlight(string text)//[h], キャラハイライト
+    bool Highlight(string text)//[l], キャラハイライト
     {
         char c = text.Split(']')[1][0];
         switch(c)
@@ -649,7 +608,84 @@ public class TextLoader : MonoBehaviour
 
         return false;
     }
+
+    bool SetItemChoices(string text)//[x]
+    {
+        Transform t;
+        for (choiceCount = 0;
+            choiceCount < UserData.instance.itemList.Count; choiceCount++)
+        {
+                t = choicesT.GetChild(choiceCount);
+                t.gameObject.SetActive(true);
+                t.FindChild("Text").GetComponent<Text>().text
+                    = 0 < UserData.instance.itemList[choiceCount].count
+                    ? UserData.instance.itemList[choiceCount].name
+                    : "??";
+        }
+        t = choicesT.GetChild(choiceCount);
+        t.gameObject.SetActive(true);
+        t.FindChild("Text").GetComponent<Text>().text = "戻る→";
+        choiceCount++;
+        messageText.text = UserData.instance.itemList[0].desTxt;
+        return true;
+    }
+
+    bool UseItem(string text)//[u]
+    {
+        SelectChoice(false);
+
+        if (MoveChoice())
+        {
+            messageText.text = selectIndex < choiceCount - 1
+                ? UserData.instance.itemList[selectIndex].desTxt
+                : "行動選択に戻ります。";
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space)
+            && 0 < UserData.instance.itemList[selectIndex].count)
+        {
+            int selTemp = selectIndex;
+            int choTemp = choiceCount;
+            foreach (Transform t in choicesT)
+            {
+                t.gameObject.SetActive(false);
+            }
+            selectIndex = 0;
+            choiceCount = 0;
+
+            if (selTemp < choTemp - 1)
+            {
+                if (UserData.instance.itemList[selTemp].Effect())
+                { UserData.instance.itemList[selTemp].count--; }
+                messageCacheList
+                    = ArrayAdvance.MergeArray(messageCacheList,
+                    UserData.instance.itemList[selTemp].useTxt);
+            }
+            else
+            {
+                EndEvent("");
+            }
+            return true;
+        }
+
+        SelectChoice(true);
+        return false;
+    }
     #endregion
+
+    #region 文字処理補助メソッド
+    void GetEventSet()//条件に合う定期イベント呼び出し、無ければランダムイベント
+    {
+        if (UserData.mReach <= UserData.instance.reach.value)
+        {
+            textSet = textSet == summit ? ending : summit;//頂上、エンディングイベント
+        }
+        else
+        {
+            textSet=randomEvents[
+            UnityEngine.Random.Range(0, randomEvents.Length - 1)];
+        }
+    }
 
     bool WriteChar(string text)
     {
@@ -712,6 +748,33 @@ public class TextLoader : MonoBehaviour
         return val;
     }
 
+    bool MoveChoice()
+    {
+        int slTemp = selectIndex;
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            selectIndex = selectIndex < choiceCount - 1 ? selectIndex + 1 : 0;
+        }
+        if (lineChoices <= choiceCount)
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                selectIndex = choiceCount <= selectIndex + lineChoices
+                    ? selectIndex % lineChoices : selectIndex + lineChoices;
+            }
+            if (Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                selectIndex = selectIndex < lineChoices
+                       ? selectIndex % lineChoices : selectIndex - lineChoices;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            selectIndex = 0 < selectIndex ? selectIndex - 1 : choiceCount - 1;
+        }
+        return slTemp != selectIndex;
+    }
+
     void SelectChoice(bool on)
     {
         Color c = on ? Color.red : Color.white;
@@ -735,14 +798,7 @@ public class TextLoader : MonoBehaviour
     {
         messageText.transform.parent.gameObject.SetActive(!Input.GetKey(KeyCode.Z));
     }
-}
-
-public enum RegularExpressions
-{
-    イベントエンド = -1,
-    キー待ち文字初期化, キー待ち, 文字初期化, 速度変更, 選択肢追加, 選択肢待ち,
-    ジャンプ, 着地点, 変数書き込み, 変数取得, 状態表示変更, 乱数取得, キャラ変更,
-    条件判定, 背景画像変更, キャラ画像変更
+    #endregion
 }
 
 public enum VariableNames
