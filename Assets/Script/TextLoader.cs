@@ -11,12 +11,12 @@ public class TextLoader : MonoBehaviour
     public TextAsset textSet;
 
     [SerializeField]
-    TextAsset summit, ending;
+    TextAsset summit, ending, over;
     [SerializeField]
     TextAsset[] randomEvents;
 
     [SerializeField]
-    Text messageText, stamText, reachText, dateText, timeText, weatherText;
+    Text messageText, stamText, reachText, dateText, timeText, tempText, weatherText;
     [SerializeField]
     string message;
     [SerializeField]
@@ -73,7 +73,7 @@ public class TextLoader : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(messageIndex == messageCacheList.Length) { return; }
+        if (messageIndex == messageCacheList.Length) { return; }
 
         HideWin();
 
@@ -83,11 +83,16 @@ public class TextLoader : MonoBehaviour
             do
             {
                 messageIndex++;
-                if (messageIndex < messageCacheList.Length)
+                Debug.Log(messageIndex);
+                if (0 < messageIndex && messageIndex < messageCacheList.Length)
                 {
                     subPred = CheckRegular(messageCacheList[messageIndex - 1]);
                     messagePred = CheckRegular(messageCacheList[messageIndex]);
-
+                }
+                else if(messageIndex==0)
+                {
+                    messagePred = CheckRegular(messageCacheList[messageIndex]);
+                    break;
                 }
                 else
                 {
@@ -127,23 +132,28 @@ public class TextLoader : MonoBehaviour
         return messagePred;
     }
 
-    public void InitializeLoadMessage(bool onTextSet=true)
+    public void InitializeLoadMessage(bool onNext=false)
     {
         subVar = new int[10];
-        if (onTextSet)
-        {
-            messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
-        }
+        messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
         messageText.transform.parent.gameObject.SetActive(true);
         messageText.text = "";
-        messageIndex = 0;
-        messagePred = CheckRegular(messageCacheList[messageIndex]);
+        if(onNext)
+        {
+            messageIndex = -1;
+        }
+        else
+        {
+            messageIndex = 0;
+            messagePred = CheckRegular(messageCacheList[messageIndex]);
+        }
     }
 
     void InitializeRE()
     {
         regExp = new Dictionary<string, Predicate<string>>();
         regExp.Add("[e]", EndEvent);
+        regExp.Add("[z]", CallNextEvent);
         regExp.Add("[r]", WaitInitialize);
         regExp.Add("[w]", Wait);
         regExp.Add("[i]", Initialize);
@@ -174,6 +184,8 @@ public class TextLoader : MonoBehaviour
         variableDict.Add("カースト", UserData.instance.caste);
         variableDict.Add("日数", UserData.instance.day);
         variableDict.Add("時間", UserData.instance.hour);
+        variableDict.Add("気温", UserData.instance.temperature);
+        variableDict.Add("天気", UserData.instance.weatherIndex);
     }
 
     void InitializeBD()//背景画像辞典
@@ -215,10 +227,16 @@ public class TextLoader : MonoBehaviour
         return true;
     }
 
-    bool CallNextEvent()//[] ,コマンド後イベント呼び出し
+    bool CallNextEvent(string text)//[z] ,コマンド後イベント呼び出し
     {
-        GetEventSet();
-        InitializeLoadMessage();
+        if (GetEventSet())
+        {
+            InitializeLoadMessage(true);
+        }
+        else
+        {
+            EndEvent(text);
+        }
         return true;
     }
 
@@ -431,13 +449,21 @@ public class TextLoader : MonoBehaviour
                 break;
         }
 
-        if(UserData.instance.mHp.value<UserData.instance.hp.value)
+        if (UserData.instance.mHp.value < UserData.instance.hp.value)
         {
             UserData.instance.hp.value = UserData.instance.mHp.value;
         }
-        else if (UserData.instance.hp.value<0)
+        else if (UserData.instance.hp.value < 0)
         {
             UserData.instance.hp.value = 0;
+        }
+        if (UserData.mReach < UserData.instance.reach.value)
+        {
+            UserData.instance.reach.value = UserData.mReach;
+        }
+        else if (UserData.instance.reach.value < 0)
+        {
+            UserData.instance.reach.value = 0;
         }
 
         return true;
@@ -445,24 +471,27 @@ public class TextLoader : MonoBehaviour
 
     bool GetVariable(string text)//[g]変数名:indexの形で指定したインデックスに読み込み
     {
-        IntVariable var;
+        int val = 0;
         string tex = text.Split(']')[1];
         string name = tex.Split(':')[0];
 
         if (variableDict.ContainsKey(name))
         {
-            var = variableDict[name];
+            val = variableDict[name].value;
+
         }
-        else
+        else if (UserData.instance.itemList.FirstOrDefault(
+            x => x.name.Equals(name)) != null)//アイテム名
         {
-            return true;
+            val = UserData.instance.itemList.FirstOrDefault(
+            x => x.name.Equals(name)).count;
         }
 
         tex = tex.Split(':')[1];
-        int index = int.Parse(tex.Substring(1));
+        int index = int.Parse(tex);
 
         if (index < 0 || subVar.Length <= index) { return true; }
-        subVar[index] = var.value;
+        subVar[index] = val;
 
         return true;
     }
@@ -474,6 +503,9 @@ public class TextLoader : MonoBehaviour
         reachText.text = variableDict["到達度"].value.ToString() + "%";
         dateText.text = variableDict["日数"].value.ToString() + "日目";
         timeText.text = variableDict["時間"].value.ToString() + ":00";
+        tempText.text = variableDict["気温"].value.ToString() + "℃";
+        weatherText.text
+            = Enum.GetName(typeof(WeatherName), variableDict["天気"].value);
         return true;
     }
 
@@ -626,7 +658,17 @@ public class TextLoader : MonoBehaviour
         t.gameObject.SetActive(true);
         t.FindChild("Text").GetComponent<Text>().text = "戻る→";
         choiceCount++;
-        messageText.text = UserData.instance.itemList[0].desTxt;
+        if (1 < choiceCount)
+        {
+            messageText.text = 0 < UserData.instance.itemList[0].count
+                ? UserData.instance.itemList[0].desTxt + "\r\n(所持数:"
+                + UserData.instance.itemList[0].count + ")"
+                : "所持していないアイテムです。";
+        }
+        else
+        {
+            messageText.text = "行動選択に戻ります。";
+        }
         return true;
     }
 
@@ -636,13 +678,21 @@ public class TextLoader : MonoBehaviour
 
         if (MoveChoice())
         {
-            messageText.text = selectIndex < choiceCount - 1
-                ? UserData.instance.itemList[selectIndex].desTxt
-                : "行動選択に戻ります。";
+            if (selectIndex < choiceCount - 1)
+            {
+                messageText.text = 0 < UserData.instance.itemList[selectIndex].count
+                    ? UserData.instance.itemList[selectIndex].desTxt + "\r\n(所持数:"
+                    + UserData.instance.itemList[selectIndex].count + ")"
+                    : "所持していないアイテムです。";
+            }
+            else
+            {
+                messageText.text = "行動選択に戻ります。";
+            }
         }
 
-        if (Input.GetKeyDown(KeyCode.Space)
-            && 0 < UserData.instance.itemList[selectIndex].count)
+        if (Input.GetKeyDown(KeyCode.Space) && (selectIndex == choiceCount - 1
+            || 0 < UserData.instance.itemList[selectIndex].count))
         {
             int selTemp = selectIndex;
             int choTemp = choiceCount;
@@ -663,7 +713,9 @@ public class TextLoader : MonoBehaviour
             }
             else
             {
-                EndEvent("");
+                messageCacheList
+                       = ArrayAdvance.MergeArray(messageCacheList,
+                       new string[1] { "[e]" });
             }
             return true;
         }
@@ -674,17 +726,23 @@ public class TextLoader : MonoBehaviour
     #endregion
 
     #region 文字処理補助メソッド
-    void GetEventSet()//条件に合う定期イベント呼び出し、無ければランダムイベント
+    bool GetEventSet()//条件に合う定期イベント呼び出し、無ければランダムイベント
     {
-        if (UserData.mReach <= UserData.instance.reach.value)
+        if (UserData.instance.hp.value <= 0)
+        {
+            textSet = over;
+        }
+        else if (UserData.mReach <= UserData.instance.reach.value)
         {
             textSet = textSet == summit ? ending : summit;//頂上、エンディングイベント
         }
-        else
+        else if (0.5f < UnityEngine.Random.value)
         {
-            textSet=randomEvents[
-            UnityEngine.Random.Range(0, randomEvents.Length - 1)];
+            textSet = randomEvents[
+            UnityEngine.Random.Range(0, randomEvents.Length)];
         }
+        else { return false; }
+        return true;
     }
 
     bool WriteChar(string text)
@@ -765,7 +823,7 @@ public class TextLoader : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.DownArrow))
             {
                 selectIndex = selectIndex < lineChoices
-                       ? selectIndex % lineChoices : selectIndex - lineChoices;
+                       ? selectIndex + lineChoices * 2 : selectIndex - lineChoices;
             }
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow))

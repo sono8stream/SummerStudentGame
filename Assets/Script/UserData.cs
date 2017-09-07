@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class UserData
 {
@@ -8,9 +9,11 @@ public class UserData
     public const int mReach = 100;
     public IntVariable karman;//カルマ
     public IntVariable caste;//カースト
-    public IntVariable temperature;
+    public IntVariable temperature;//山頂に行くほど減少
     public IntVariable bodyTemp;//体温
+    public IntVariable weatherIndex;//段階を追って変化
     public List<Item> itemList;//アイテム、個数
+    public List<IntVariable> flagList; 
 
     public static UserData instance = new UserData();
 
@@ -20,10 +23,11 @@ public class UserData
         hour = new IntVariable(9);
         mHp = new IntVariable(100);
         hp = new IntVariable(mHp.value);
-        reach = new IntVariable(0);
-        karman = new IntVariable(30);
+        reach = new IntVariable(95);
+        karman = new IntVariable(60);//初期値30
         caste = new IntVariable((int)CasteName.アチュート);
-        temperature = new IntVariable(20);
+        temperature = new IntVariable(30);
+        weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
 
         InitializeItem();
     }
@@ -60,4 +64,9 @@ public enum ItemName
 {
     カルダモン,ジンジャー, ガーリック, フェヌグリーク, 経典群I巻,
     経典群II巻, ヨガ教本, 寺院の証
+}
+
+public enum WeatherName
+{
+    晴れ = 0, 曇り, 雨
 }
