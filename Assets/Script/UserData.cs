@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class UserData
@@ -13,7 +14,8 @@ public class UserData
     public IntVariable bodyTemp;//体温
     public IntVariable weatherIndex;//段階を追って変化
     public List<Item> itemList;//アイテム、個数
-    public List<IntVariable> flagList; 
+    public List<IntVariable> flagList;
+    public const int flags = 8;
 
     public static UserData instance = new UserData();
 
@@ -22,14 +24,18 @@ public class UserData
         day = new IntVariable(1);
         hour = new IntVariable(9);
         mHp = new IntVariable(100);
-        hp = new IntVariable(mHp.value);
-        reach = new IntVariable(95);
+        hp = new IntVariable(/*mHp.value*/5);
+        reach = new IntVariable(0);
         karman = new IntVariable(60);//初期値30
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(30);
         weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
 
         InitializeItem();
+
+        flagList = new List<IntVariable>();
+        for(int i=0;i<flags;i++)
+        { flagList.Add(new IntVariable(0)); }
     }
 
     void InitializeItem()
@@ -69,4 +75,9 @@ public enum ItemName
 public enum WeatherName
 {
     晴れ = 0, 曇り, 雨
+}
+
+public enum FlagName
+{
+    休む2回目
 }

@@ -222,6 +222,7 @@ public class TextLoader : MonoBehaviour
     bool EndEvent(string text)//[e]
     {
         Highlight("[l]f");
+        UpdateStatus(text);
         messageText.transform.parent.gameObject.SetActive(false);
         commandsT.gameObject.SetActive(true);
         return true;
@@ -414,12 +415,25 @@ public class TextLoader : MonoBehaviour
     bool ChangeVariable(string text)//[h] 変数名:の形で指定可能
     {
         IntVariable var;
+        Item item = null;
         string tex = text.Substring(3);
         string name = tex.Split(':')[0];
 
         if (variableDict.ContainsKey(name))
         {
             var = variableDict[name];
+        }
+        else if (UserData.instance.itemList.FirstOrDefault(
+            x => x.name.Equals(name)) != null)//アイテム名
+        {
+            item = UserData.instance.itemList.FirstOrDefault(
+            x => x.name.Equals(name));
+            var = new IntVariable(item.count);
+        }
+        else if (name[0] == '(')
+        {
+            var = UserData.instance.flagList[
+                int.Parse(name.Substring(1, name.Length - 2))];
         }
         else
         {
@@ -447,6 +461,11 @@ public class TextLoader : MonoBehaviour
             case '=':
                 var.value = value;
                 break;
+        }
+
+        if (item != null)
+        {
+            item.count = var.value < 0 ? 0 : var.value;
         }
 
         if (UserData.instance.mHp.value < UserData.instance.hp.value)
@@ -485,6 +504,15 @@ public class TextLoader : MonoBehaviour
         {
             val = UserData.instance.itemList.FirstOrDefault(
             x => x.name.Equals(name)).count;
+        }
+        else if(name[0]=='(')
+        {
+            val = UserData.instance.flagList[
+                int.Parse(name.Substring(1, name.Length - 2))].value;
+        }
+        else
+        {
+            return true;
         }
 
         tex = tex.Split(':')[1];
@@ -798,6 +826,11 @@ public class TextLoader : MonoBehaviour
         else if (text[0] == '[' && 0 <= text[1] - '0' && text[1] - '0' <= 9)//予備変数
         {
             val = subVar[text[1] - '0'];
+        }
+        else if (text[0] == '(')//フラグ変数
+        {
+            val = UserData.instance.flagList[
+                int.Parse(text.Substring(1,text.Length-2))].value;
         }
         else
         {
