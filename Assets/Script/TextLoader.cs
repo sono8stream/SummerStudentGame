@@ -751,6 +751,12 @@ public class TextLoader : MonoBehaviour
         SelectChoice(true);
         return false;
     }
+
+    bool ToTitle(string text)
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(0);
+        return true;
+    }
     #endregion
 
     #region 文字処理補助メソッド
