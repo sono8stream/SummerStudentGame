@@ -15,26 +15,31 @@ public class UserData
     public IntVariable weatherIndex;//段階を追って変化
     public List<Item> itemList;//アイテム、個数
     public List<IntVariable> flagList;
-    public const int flags = 8;
+    public const int flags = 12;
 
     public static UserData instance = new UserData();
 
     private UserData()
     {
+        mHp = new IntVariable(100);
+        hp = new IntVariable(mHp.value);
+
+        InitializeData();
+    }
+
+    public void InitializeData()
+    {
         day = new IntVariable(1);
         hour = new IntVariable(9);
-        mHp = new IntVariable(100);
-        hp = new IntVariable(/*mHp.value*/5);
         reach = new IntVariable(0);
-        karman = new IntVariable(60);//初期値30
+        karman = new IntVariable(30);//初期値30
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(30);
         weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
 
         InitializeItem();
-
         flagList = new List<IntVariable>();
-        for(int i=0;i<flags;i++)
+        for (int i = 0; i < flags; i++)
         { flagList.Add(new IntVariable(0)); }
     }
 
@@ -45,8 +50,8 @@ public class UserData
             "チャイの香り付けによく使われる。\r\nスタミナを10回復"));
         itemList.Add(new RecovItem(30, hp, "ジンジャー",
             "健胃、保温、解熱、消炎、沈吐など多くの薬効。\r\nスタミナを30回復"));
-        itemList.Add(new RecovItem(10, mHp, "ガーリック",
-            "疲労回復、体力増強、滋養強壮の効果あり。\r\nスタミナ最大値を10上昇"));
+        itemList.Add(new RecovItem(5, mHp, "ガーリック",
+            "疲労回復、体力増強、滋養強壮の効果あり。\r\nスタミナ最大値を5上昇"));
         itemList.Add(new RecovItem(800, hp, "フェヌグリーク",
             "滋養強壮、栄養補給、食欲増進、解熱の効果あり。\r\nスタミナを全回復"));
         itemList.Add(new KeyItem(10, "経典群I巻",

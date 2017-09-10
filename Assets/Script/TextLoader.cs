@@ -59,6 +59,7 @@ public class TextLoader : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        UserData.instance.InitializeData();
         messageText.text = "";
         InitializeRE();
         InitializeVD();
@@ -172,6 +173,8 @@ public class TextLoader : MonoBehaviour
         regExp.Add("[m]", ChangeCharaSprite);
         regExp.Add("[x]", SetItemChoices);
         regExp.Add("[u]", UseItem);
+        regExp.Add("[y]", ToTitle);
+        regExp.Add("[p]", ChangeItemCount);
     }
 
     void InitializeVD()//変数辞典,[h]変数名:の形で指定可能
@@ -222,7 +225,7 @@ public class TextLoader : MonoBehaviour
     bool EndEvent(string text)//[e]
     {
         Highlight("[l]f");
-        UpdateStatus(text);
+        UpdateDay();
         messageText.transform.parent.gameObject.SetActive(false);
         commandsT.gameObject.SetActive(true);
         return true;
@@ -230,6 +233,7 @@ public class TextLoader : MonoBehaviour
 
     bool CallNextEvent(string text)//[z] ,コマンド後イベント呼び出し
     {
+        UpdateStatus(text);
         if (GetEventSet())
         {
             InitializeLoadMessage(true);
@@ -752,14 +756,73 @@ public class TextLoader : MonoBehaviour
         return false;
     }
 
-    bool ToTitle(string text)
+    bool ToTitle(string text)//[y]
     {
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(0);
+        int sceneIndex = text.Length <= 3 ? 0 : int.Parse(text.Substring(3));
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneIndex);
         return true;
     }
+
+    //[p]アイテム名:個数:確率,アイテム名:個数:確率, ...
+    bool ChangeItemCount(string text)//[p],確率を指定してランダムに入手、入手テキスト
+    {
+        string[] opeTxt = text.Substring(3).Split(',');
+        int val = UnityEngine.Random.Range(0, 100);
+        int co = 0;
+        int i = 0;
+        Item item = null;
+        for (; i < opeTxt.Length; i++)
+        {
+            co += int.Parse(opeTxt[i].Split(':')[2]);
+            if (val < co)
+            {
+                item = UserData.instance.itemList.First(
+                    x => x.name.Equals(opeTxt[i].Split(':')[0]));
+                break;
+            }
+        }
+        Debug.Log(item.name);
+        if (item == null) { return true; }
+        int delta = int.Parse(opeTxt[i].Split(':')[1]);
+        if (item.count == 0 && delta < 0) { return true; }
+        if (item.count + delta < 0)
+        {
+            delta = -item.count;
+        }
+        item.count += delta;
+        string txt = item.name + "を" + delta.ToString() + "つ";
+        txt += delta < 0 ? "失った。" : "手に入れた！";
+        string[] getText = new string[2] { txt, "[r]" };
+
+        messageCacheList = ArrayAdvance.InsertArray(
+                messageCacheList, getText, messageIndex + 1);
+
+        return true;
+    }
+
     #endregion
 
     #region 文字処理補助メソッド
+    void UpdateDay()
+    {
+        UserData.instance.day.value++;
+        if (UnityEngine.Random.value < 0.1f + UserData.instance.reach.value * 0.7f
+            + UserData.instance.day.value * 0.1f)
+        {
+            UserData.instance.weatherIndex.value += UnityEngine.Random.Range(-1, 2);
+            if (UserData.instance.weatherIndex.value < 0
+                || 2 < UserData.instance.weatherIndex.value)
+            {
+                UserData.instance.weatherIndex.value = 1;
+            }
+        }
+        UserData.instance.temperature.value
+            = 30 - (int)(UserData.instance.reach.value * 0.4f
+            + UnityEngine.Random.Range(-2 - UserData.instance.weatherIndex.value, 3)
+            + UserData.instance.day.value * 0.5f);
+        UpdateStatus("");
+    }
+
     bool GetEventSet()//条件に合う定期イベント呼び出し、無ければランダムイベント
     {
         if (UserData.instance.hp.value <= 0)
@@ -770,7 +833,7 @@ public class TextLoader : MonoBehaviour
         {
             textSet = textSet == summit ? ending : summit;//頂上、エンディングイベント
         }
-        else if (0.5f < UnityEngine.Random.value)
+        else if (0.65f < UnityEngine.Random.value)
         {
             textSet = randomEvents[
             UnityEngine.Random.Range(0, randomEvents.Length)];
@@ -836,7 +899,13 @@ public class TextLoader : MonoBehaviour
         else if (text[0] == '(')//フラグ変数
         {
             val = UserData.instance.flagList[
-                int.Parse(text.Substring(1,text.Length-2))].value;
+                int.Parse(text.Substring(1, text.Length - 2))].value;
+        }
+        else if (UserData.instance.itemList.FirstOrDefault(
+            x => x.name.Equals(text)) != null)
+        {
+            val = UserData.instance.itemList.FirstOrDefault(
+            x => x.name.Equals(text)).count;
         }
         else
         {

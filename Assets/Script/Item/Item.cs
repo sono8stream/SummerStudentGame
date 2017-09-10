@@ -12,7 +12,7 @@ public class Item
         value = val;
         name = nm;
         desTxt = deT;
-        count = 1;
+        count = 0;
     }
 
     public virtual bool Effect()//アイテム使用時の効果、戻り値trueなら消費
