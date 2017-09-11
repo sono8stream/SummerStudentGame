@@ -15,7 +15,7 @@ public class UserData
     public IntVariable weatherIndex;//段階を追って変化
     public List<Item> itemList;//アイテム、個数
     public List<IntVariable> flagList;
-    public const int flags = 12;
+    public const int flags = 12;//休む2回目*8,身分変化*4
 
     public static UserData instance = new UserData();
 
@@ -24,6 +24,9 @@ public class UserData
         mHp = new IntVariable(100);
         hp = new IntVariable(mHp.value);
 
+        flagList = new List<IntVariable>();
+        for (int i = 0; i < flags; i++)
+        { flagList.Add(new IntVariable(0)); }
         InitializeData();
     }
 
@@ -32,15 +35,16 @@ public class UserData
         day = new IntVariable(1);
         hour = new IntVariable(9);
         reach = new IntVariable(0);
-        karman = new IntVariable(30);//初期値30
+        karman = new IntVariable(40);//初期値40
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(30);
         weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
 
         InitializeItem();
-        flagList = new List<IntVariable>();
-        for (int i = 0; i < flags; i++)
-        { flagList.Add(new IntVariable(0)); }
+        for (int i = 8; i < 11; i++)
+        {
+            flagList[i].value = 0;
+        }
     }
 
     void InitializeItem()

@@ -204,6 +204,7 @@ public class TextLoader : MonoBehaviour
         backSpDict.Add("寺院", backSprites[7]);
         backSpDict.Add("夜の森", backSprites[8]);
         backSpDict.Add("夜の川", backSprites[9]);
+        backSpDict.Add("光", backSprites[10]);
     }
 
     void InitializeCD()//キャラ画像辞典
@@ -225,7 +226,10 @@ public class TextLoader : MonoBehaviour
     bool EndEvent(string text)//[e]
     {
         Highlight("[l]f");
-        UpdateDay();
+        if (text.Length < 4)
+        {
+            UpdateDay();
+        }
         messageText.transform.parent.gameObject.SetActive(false);
         commandsT.gameObject.SetActive(true);
         return true;
@@ -621,6 +625,13 @@ public class TextLoader : MonoBehaviour
             if (!backSpDict.ContainsKey(elem[0])) { return true; }
             back2.sprite = backSpDict[elem[0]];
             fadeLim = int.Parse(elem[1]);
+            if (fadeLim == 0)
+            {
+                back1.sprite = back2.sprite;
+                back1.color = Color.white;
+                back2.color = new Color(1, 1, 1, 0);
+                return true;
+            }
         }
         else if (fadeCnt == fadeLim)
         {
@@ -747,7 +758,7 @@ public class TextLoader : MonoBehaviour
             {
                 messageCacheList
                        = ArrayAdvance.MergeArray(messageCacheList,
-                       new string[1] { "[e]" });
+                       new string[1] { "[e]戻る" });
             }
             return true;
         }
@@ -759,7 +770,15 @@ public class TextLoader : MonoBehaviour
     bool ToTitle(string text)//[y]
     {
         int sceneIndex = text.Length <= 3 ? 0 : int.Parse(text.Substring(3));
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneIndex);
+        if (sceneIndex == 1)
+        {
+            UserData.instance.InitializeData();
+            EndEvent("[e]戻る");
+        }
+        else
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneIndex);
+        }
         return true;
     }
 
@@ -819,7 +838,7 @@ public class TextLoader : MonoBehaviour
         UserData.instance.temperature.value
             = 30 - (int)(UserData.instance.reach.value * 0.4f
             + UnityEngine.Random.Range(-2 - UserData.instance.weatherIndex.value, 3)
-            + UserData.instance.day.value * 0.5f);
+            + UserData.instance.day.value * 0.2f);
         UpdateStatus("");
     }
 
