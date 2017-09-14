@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿[System.Serializable]
 public class Item
 {
     protected int value;//効果値

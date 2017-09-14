@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿[System.Serializable]
 public class RecovItem : Item
 {
     IntVariable tar;
@@ -8,9 +7,9 @@ public class RecovItem : Item
         : base(val, nm, deT)
     {
         tar = tg;
-        useTxt = new string[8]{name + "を使用しました。","[w]",
+        useTxt = new string[7]{name + "を使用しました。","[w]",
             "力がみなぎる！","[w]",
-            "アイテムはなくなった。","[r]","[d]","[e]" };
+            "アイテムはなくなった。","[r]","[d]"};
     }
 
     public override bool Effect()

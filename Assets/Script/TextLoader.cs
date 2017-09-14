@@ -59,13 +59,21 @@ public class TextLoader : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        UserData.instance.InitializeData();
+        UserData.instance = UserData.Load();
         messageText.text = "";
         InitializeRE();
         InitializeVD();
         InitializeBD();
         InitializeCD();
-        InitializeLoadMessage();
+        if (1 < UserData.instance.day.value)
+        {
+            UserData.instance.day.value--;
+            EndEvent("[e]");
+        }
+        else
+        {
+            InitializeLoadMessage();
+        }
 
         fadeLim = 0;
         fadeCnt = 0;
@@ -175,6 +183,7 @@ public class TextLoader : MonoBehaviour
         regExp.Add("[u]", UseItem);
         regExp.Add("[y]", ToTitle);
         regExp.Add("[p]", ChangeItemCount);
+        regExp.Add("[v]", SaveUserData);
     }
 
     void InitializeVD()//変数辞典,[h]変数名:の形で指定可能
@@ -225,13 +234,21 @@ public class TextLoader : MonoBehaviour
     #region 文字処理メソッド
     bool EndEvent(string text)//[e]
     {
-        Highlight("[l]f");
-        if (text.Length < 4)
+        UpdateStatus(text);
+        if (GetEventSet(false))
         {
-            UpdateDay();
+            InitializeLoadMessage(true);
         }
-        messageText.transform.parent.gameObject.SetActive(false);
-        commandsT.gameObject.SetActive(true);
+        else
+        {
+            Highlight("[l]f");
+            if (text.Length < 4)
+            {
+                UpdateDay();
+            }
+            messageText.transform.parent.gameObject.SetActive(false);
+            commandsT.gameObject.SetActive(true);
+        }
         return true;
     }
 
@@ -754,12 +771,9 @@ public class TextLoader : MonoBehaviour
                     = ArrayAdvance.MergeArray(messageCacheList,
                     UserData.instance.itemList[selTemp].useTxt);
             }
-            else
-            {
-                messageCacheList
-                       = ArrayAdvance.MergeArray(messageCacheList,
-                       new string[1] { "[e]戻る" });
-            }
+            messageCacheList
+                    = ArrayAdvance.MergeArray(messageCacheList,
+                    new string[1] { "[e]戻る" });
             return true;
         }
 
@@ -819,6 +833,11 @@ public class TextLoader : MonoBehaviour
         return true;
     }
 
+    bool SaveUserData(string text)//[v]
+    {
+        UserData.Save(UserData.instance);
+        return true;
+    }
     #endregion
 
     #region 文字処理補助メソッド
@@ -839,10 +858,27 @@ public class TextLoader : MonoBehaviour
             = 30 - (int)(UserData.instance.reach.value * 0.4f
             + UnityEngine.Random.Range(-2 - UserData.instance.weatherIndex.value, 3)
             + UserData.instance.day.value * 0.2f);
+
+        if (UserData.instance.reach.value < 30)
+        {
+            ChangeBackSprite("[b]入口:0");
+            reachText.color = Color.white;
+        }
+        else if (UserData.instance.reach.value < 70)
+        {
+            ChangeBackSprite("[b]山中:0");
+            reachText.color = new Color(1, 0.9f, 0.7f);
+        }
+        else
+        {
+            ChangeBackSprite("[b]山頂:0");
+            reachText.color = new Color(1, 0.5f, 0);
+        }
+
         UpdateStatus("");
     }
 
-    bool GetEventSet()//条件に合う定期イベント呼び出し、無ければランダムイベント
+    bool GetEventSet(bool onRandom = true)//条件に合う定期イベント呼び出し、無ければランダムイベント
     {
         if (UserData.instance.hp.value <= 0)
         {
@@ -852,7 +888,7 @@ public class TextLoader : MonoBehaviour
         {
             textSet = textSet == summit ? ending : summit;//頂上、エンディングイベント
         }
-        else if (0.65f < UnityEngine.Random.value)
+        else if (onRandom && UnityEngine.Random.value < 0.45f)
         {
             textSet = randomEvents[
             UnityEngine.Random.Range(0, randomEvents.Length)];

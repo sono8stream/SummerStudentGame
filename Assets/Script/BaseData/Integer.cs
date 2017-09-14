@@ -1,4 +1,5 @@
-﻿public class IntVariable
+﻿[System.Serializable]
+public class IntVariable
 {
     public int value;
 
