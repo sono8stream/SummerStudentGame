@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
+[System.Serializable]
 public class UserData
 {
     public IntVariable day, hour;
@@ -21,17 +24,19 @@ public class UserData
 
     private UserData()
     {
-        mHp = new IntVariable(100);
-        hp = new IntVariable(mHp.value);
-
         flagList = new List<IntVariable>();
         for (int i = 0; i < flags; i++)
         { flagList.Add(new IntVariable(0)); }
-        InitializeData();
+        InitializeData(true);
     }
 
-    public void InitializeData()
+    public void InitializeData(bool initializeHp = false)
     {
+        if (initializeHp)
+        {
+            mHp = new IntVariable(100);
+            hp = new IntVariable(mHp.value);
+        }
         day = new IntVariable(1);
         hour = new IntVariable(9);
         reach = new IntVariable(0);
@@ -66,6 +71,45 @@ public class UserData
             "何かに使えそうだ。"));
         itemList.Add(new KeyItem(10, "寺院の証",
             "ヒマラヤの寺院に来た証。\r\nヒンドゥー教徒に認められるようになる。"));
+    }
+
+    public static bool Save(UserData target)
+    {
+        string prefKey = Application.dataPath+"/savedata.dat";
+        MemoryStream memoryStream = new MemoryStream();
+#if UNITY_IPHONE || UNITY_IOS
+		System.Environment.SetEnvironmentVariable("MONO_REFLECTION_SERIALIZER", "yes");
+#endif
+        BinaryFormatter bf = new BinaryFormatter();
+        bf.Serialize(memoryStream, target);
+
+        string tmp = System.Convert.ToBase64String(memoryStream.ToArray());
+        try
+        {
+            PlayerPrefs.SetString(prefKey, tmp);
+        }
+        catch (PlayerPrefsException)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public static UserData Load()
+    {
+        string prefKey = Application.dataPath + "/savedata.dat";
+        if (!PlayerPrefs.HasKey(prefKey)) return new UserData();
+#if UNITY_IPHONE || UNITY_IOS
+		System.Environment.SetEnvironmentVariable("MONO_REFLECTION_SERIALIZER", "yes");
+#endif
+        BinaryFormatter bf = new BinaryFormatter();
+        string serializedData = PlayerPrefs.GetString(prefKey);
+
+        MemoryStream dataStream
+            = new MemoryStream(System.Convert.FromBase64String(serializedData));
+        UserData data = (UserData)bf.Deserialize(dataStream);
+
+        return data;
     }
 }
 
