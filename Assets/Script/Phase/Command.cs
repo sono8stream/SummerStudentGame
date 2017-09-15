@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class Command : MonoBehaviour {
 
     [SerializeField]
-    Transform commandsT;
+    PhaseChanger changer;
     [SerializeField]
     TextLoader loader;
     [SerializeField]
@@ -24,7 +24,6 @@ public class Command : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-
     }
 
     // Update is called once per frame
@@ -72,7 +71,7 @@ public class Command : MonoBehaviour {
     void SelectChoice(bool on)
     {
         Color c = on ? Color.red : Color.white;
-        commandsT.GetChild(selectIndex).GetComponent<Image>().color = c;
+        transform.GetChild(selectIndex).GetComponent<Image>().color = c;
     }
     
     public void CommandClick(int no)
@@ -84,5 +83,6 @@ public class Command : MonoBehaviour {
     {
         loader.textSet = tAsset;
         loader.InitializeLoadMessage();
+        changer.ChangeWin(WinName.TextWin);
     }
 }

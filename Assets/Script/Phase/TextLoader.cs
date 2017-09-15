@@ -11,6 +11,10 @@ public class TextLoader : MonoBehaviour
     public TextAsset textSet;
 
     [SerializeField]
+    PhaseChanger changer;
+    [SerializeField]
+    Logger logger;
+    [SerializeField]
     TextAsset summit, ending, over;
     [SerializeField]
     TextAsset[] randomEvents;
@@ -20,7 +24,7 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     string message;
     [SerializeField]
-    Transform choicesT, commandsT;
+    Transform choicesT;
     [SerializeField]
     Image back1, back2;//背景画像
     [SerializeField]
@@ -92,10 +96,11 @@ public class TextLoader : MonoBehaviour
             do
             {
                 messageIndex++;
-                Debug.Log(messageIndex);
+                //Debug.Log(messageIndex);
                 if (0 < messageIndex && messageIndex < messageCacheList.Length)
                 {
-                    subPred = CheckRegular(messageCacheList[messageIndex - 1]);
+                    subPred 
+                        = CheckRegular(messageCacheList[messageIndex - 1], false);
                     messagePred = CheckRegular(messageCacheList[messageIndex]);
                 }
                 else if(messageIndex==0)
@@ -129,7 +134,7 @@ public class TextLoader : MonoBehaviour
         return textLine;
     }
 
-    Predicate<string> CheckRegular(string s)//正規表現のチェック
+    Predicate<string> CheckRegular(string s,bool once=true)//正規表現のチェック
     {
         Predicate<string> messagePred = WriteText;
         if (2 < s.Length)
@@ -138,6 +143,10 @@ public class TextLoader : MonoBehaviour
             if (regExp.ContainsKey(sTemp))
             { messagePred = regExp[sTemp]; }
         }
+        if (once && messagePred == WriteText)
+        {
+            logger.AddText("\r\n" + s);
+        }
         return messagePred;
     }
 
@@ -145,7 +154,6 @@ public class TextLoader : MonoBehaviour
     {
         subVar = new int[10];
         messageCacheList = Regex.Split(textSet.text, "\r\n|\r|\n");
-        messageText.transform.parent.gameObject.SetActive(true);
         messageText.text = "";
         if(onNext)
         {
@@ -246,8 +254,7 @@ public class TextLoader : MonoBehaviour
             {
                 UpdateDay();
             }
-            messageText.transform.parent.gameObject.SetActive(false);
-            commandsT.gameObject.SetActive(true);
+            changer.ChangeWin(WinName.ComWin);
         }
         return true;
     }
@@ -306,6 +313,7 @@ public class TextLoader : MonoBehaviour
         {
             messageText.text = "";
             textCount = 0;
+            logger.AddText("\r\n");
             return true;
         }
 
