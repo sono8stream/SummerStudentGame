@@ -22,6 +22,8 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     Text messageText, stamText, reachText, dateText, timeText, tempText, weatherText;
     [SerializeField]
+    AudioSource audioSource;
+    [SerializeField]
     string message;
     [SerializeField]
     Transform choicesT;
@@ -35,6 +37,8 @@ public class TextLoader : MonoBehaviour
     Sprite[] backSprites, charaSprites;
     [SerializeField]
     AudioClip[] bgms;
+    [SerializeField]
+    AudioClip[] ses;
 
     int textLim = 2;//テキスト表示までのウェイト
     int tSetIndex;
@@ -56,6 +60,7 @@ public class TextLoader : MonoBehaviour
     Dictionary<string, Sprite> backSpDict;
     Dictionary<string, Sprite> charaSpDict;
     Dictionary<string, AudioClip> bgmDict;
+    Dictionary<string, AudioClip> seDict;
     Predicate<string> messagePred, subPred;
 
     int[] subVar;//予備変数
@@ -187,6 +192,8 @@ public class TextLoader : MonoBehaviour
         regExp.Add("[f]", CheckFlag);
         regExp.Add("[b]", ChangeBackSprite);
         regExp.Add("[m]", ChangeCharaSprite);
+        regExp.Add("[o]", ChangeBgm);
+        regExp.Add("[q]", PlaySE);
         regExp.Add("[x]", SetItemChoices);
         regExp.Add("[u]", UseItem);
         regExp.Add("[y]", ToTitle);
@@ -237,6 +244,16 @@ public class TextLoader : MonoBehaviour
         charaSpDict.Add("レモン教徒", charaSprites[7]);
         charaSpDict.Add("女神", charaSprites[8]);
         charaSpDict.Add("化け物", charaSprites[9]);
+    }
+
+    void InitializeBmD()
+    {
+        bgmDict = new Dictionary<string, AudioClip>();
+    }
+
+    void InitializeSeD()
+    {
+        seDict = new Dictionary<string, AudioClip>();
     }
 
     #region 文字処理メソッド
@@ -707,6 +724,27 @@ public class TextLoader : MonoBehaviour
         charaTemp2.color += new Color(0, 0, 0, 1.0f / fadeLim);
 
         return false;
+    }
+
+    bool ChangeBgm(string text)
+    {
+        if (!bgmDict.ContainsKey(text.Substring(3)))
+        {
+            return true;
+        }
+        audioSource.clip = bgmDict[text.Substring(3)];
+        audioSource.Play();
+        return true;
+    }
+
+    bool PlaySE(string text)
+    {
+        if (!bgmDict.ContainsKey(text.Substring(3)))
+        {
+            return true;
+        }
+        audioSource.PlayOneShot(bgmDict[text.Substring(3)]);
+        return true;
     }
 
     bool SetItemChoices(string text)//[x]
