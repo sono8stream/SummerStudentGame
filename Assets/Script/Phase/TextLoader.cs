@@ -104,11 +104,11 @@ public class TextLoader : MonoBehaviour
                 //Debug.Log(messageIndex);
                 if (0 < messageIndex && messageIndex < messageCacheList.Length)
                 {
-                    subPred 
+                    subPred
                         = CheckRegular(messageCacheList[messageIndex - 1], false);
                     messagePred = CheckRegular(messageCacheList[messageIndex]);
                 }
-                else if(messageIndex==0)
+                else if (messageIndex == 0)
                 {
                     messagePred = CheckRegular(messageCacheList[messageIndex]);
                     break;
@@ -139,7 +139,7 @@ public class TextLoader : MonoBehaviour
         return textLine;
     }
 
-    Predicate<string> CheckRegular(string s,bool once=true)//正規表現のチェック
+    Predicate<string> CheckRegular(string s, bool once = true)//正規表現のチェック
     {
         Predicate<string> messagePred = WriteText;
         if (2 < s.Length)
@@ -168,6 +168,7 @@ public class TextLoader : MonoBehaviour
         {
             messageIndex = 0;
             messagePred = CheckRegular(messageCacheList[messageIndex]);
+            Debug.Log("Loaded");
         }
     }
 
