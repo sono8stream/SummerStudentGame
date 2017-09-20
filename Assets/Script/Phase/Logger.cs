@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Text.RegularExpressions;
 
 public class Logger : MonoBehaviour
 {
@@ -12,6 +10,8 @@ public class Logger : MonoBehaviour
     Text logTxt;
     [SerializeField]
     string log;
+    [SerializeField]
+    Text upMark, downMark;
 
     RectTransform logRectT;
     const int LINE_LENGTH = 50;
@@ -44,13 +44,12 @@ public class Logger : MonoBehaviour
             if (Input.GetKey(KeyCode.UpArrow))
             {
                 logRectT.anchoredPosition += Vector2.down * speed;
-                LimitScroll(true);
             }
             else if (Input.GetKey(KeyCode.DownArrow))
             {
                 logRectT.anchoredPosition += Vector2.up * speed;
-                LimitScroll(false);
             }
+            LimitScroll();
         }
 
         if (Input.GetKeyDown(KeyCode.C))
@@ -60,35 +59,51 @@ public class Logger : MonoBehaviour
         }
     }
 
-    public void AddText(string txt)
+    public void AddText(string txt,int lines=1)
     {
         string nLiner = "\r\n";
-        //lineCnt += Regex.Split(txt, nLiner).Length;
-        lineCnt++;
+        lineCnt += lines;
         log += txt;
         if (LINE_LENGTH < lineCnt)
         {
             int delCnt = lineCnt - LINE_LENGTH;
+            //Debug.Log(delCnt);
             for (int i = 0; i < delCnt; i++)
             {
                 log = log.Substring(nLiner.Length + log.IndexOf(nLiner));
             }
+            lineCnt = LINE_LENGTH;
         }
         logTxt.text = log;
-        Debug.Log(lineCnt);
+        //Debug.Log(lineCnt);
     }
 
-    bool LimitScroll(bool up)
+    bool LimitScroll()
     {
-        if (up && logRectT.anchoredPosition.y < maskHeight - lineCnt * lPerLine)
+        if (logRectT.anchoredPosition.y < maskHeight - lineCnt * lPerLine)
         {
             logRectT.anchoredPosition
                 = Vector2.up * (maskHeight - lineCnt * lPerLine);
+            upMark.gameObject.SetActive(false);
+            return true;
         }
         else if (0 < logRectT.anchoredPosition.y)
         {
             logRectT.anchoredPosition = Vector2.zero;
+            downMark.gameObject.SetActive(false);
+            return true;
         }
-        return true;
+
+        upMark.gameObject.SetActive(true);
+        downMark.gameObject.SetActive(true);
+        if (logRectT.anchoredPosition.y == maskHeight - lineCnt * lPerLine)
+        {
+            upMark.gameObject.SetActive(false);
+        }
+        else if (logRectT.anchoredPosition.y == 0)
+        {
+            downMark.gameObject.SetActive(false);
+        }
+        return false;
     }
 }

@@ -20,7 +20,8 @@ public class TextLoader : MonoBehaviour
     TextAsset[] randomEvents;
 
     [SerializeField]
-    Text messageText, stamText, reachText, dateText, timeText, tempText, weatherText;
+    Text messageText, stamText, reachText, dateText,
+        timeText, tempText, weatherText, charaText;
     [SerializeField]
     AudioSource audioSource;
     [SerializeField]
@@ -48,6 +49,8 @@ public class TextLoader : MonoBehaviour
     int fadeLim;
     int fadeCnt;
     Image charaTemp, charaTemp2;
+    string charaName, charaName2;
+    const string PLAYER_NAME = "ヤシュパル", SISTER_NAME = "アンジュ";
 
     int lineChoices = 3;
     int selectIndex;//選択中選択肢番号
@@ -86,6 +89,8 @@ public class TextLoader : MonoBehaviour
 
         fadeLim = 0;
         fadeCnt = 0;
+        charaName = PLAYER_NAME;
+        charaName2 = PLAYER_NAME;
     }
 
     // Update is called once per frame
@@ -331,7 +336,6 @@ public class TextLoader : MonoBehaviour
         {
             messageText.text = "";
             textCount = 0;
-            logger.AddText("\r\n");
             return true;
         }
 
@@ -597,27 +601,39 @@ public class TextLoader : MonoBehaviour
         subVar[index] = UnityEngine.Random.Range(0, 100);
         return true;
     }
-    
+
     bool Highlight(string text)//[l], キャラハイライト
     {
         char c = text.Split(']')[1][0];
-        switch(c)
+        RectTransform charaNameT
+            = charaText.transform.parent.GetComponent<RectTransform>();
+        Vector2 pos = new Vector2(-500, 185);
+
+        switch (c)
         {
             case 'l':
                 leftChara.color = Color.white;
                 rightChara.color = Color.gray;
+                charaText.text = charaName;
+                charaNameT.localPosition = pos;
+                logger.AddText("\r\n\r\n[" + charaName + "]",2);
                 break;
             case 'r':
                 rightChara.color = Color.white;
                 leftChara.color = Color.gray;
+                charaText.text = charaName2;
+                charaNameT.localPosition = new Vector2(-pos.x, pos.y);
+                logger.AddText("\r\n\r\n[" + charaName2 + "]",2);
                 break;
             case 'n':
                 rightChara.color = Color.gray;
                 leftChara.color = Color.gray;
+                charaNameT.localPosition = new Vector2(-pos.x + 1000, pos.y);
                 break;
             case 'f':
                 rightChara.color = Color.white;
                 leftChara.color = Color.white;
+                charaNameT.localPosition = new Vector2(-pos.x + 1000, pos.y);
                 break;
         }
         return true;
@@ -697,15 +713,31 @@ public class TextLoader : MonoBehaviour
         {
             string[] elem = text.Substring(3).Split(':');
             if (!charaSpDict.ContainsKey(elem[1])) { return true; }
+
+            string name;
+            switch(elem[1])
+            {
+                case "主人公":
+                    name = PLAYER_NAME;
+                    break;
+                case "妹":
+                    name = SISTER_NAME;
+                    break;
+                default:
+                    name = elem[1];
+                    break;
+            }
             if (elem[0].Equals("l"))
             {
                 charaTemp = leftChara;
                 charaTemp2 = leftChara2;
+                charaName = name;
             }
             else
             {
                 charaTemp = rightChara;
                 charaTemp2 = rightChara2;
+                charaName2 = name;
             }
 
             charaTemp2.sprite = charaSpDict[elem[1]];
