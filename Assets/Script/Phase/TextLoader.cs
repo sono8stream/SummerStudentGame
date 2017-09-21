@@ -76,6 +76,9 @@ public class TextLoader : MonoBehaviour
         InitializeVD();
         InitializeBD();
         InitializeCD();
+        InitializeBmD();
+        InitializeSeD();
+
         if (1 < UserData.instance.day.value)
         {
             UserData.instance.day.value--;
@@ -254,17 +257,21 @@ public class TextLoader : MonoBehaviour
     void InitializeBmD()
     {
         bgmDict = new Dictionary<string, AudioClip>();
+        bgmDict.Add("山1", bgms[0]);
+        bgmDict.Add("山2", bgms[1]);
+        bgmDict.Add("緊張", bgms[2]);
+
     }
 
     void InitializeSeD()
     {
         seDict = new Dictionary<string, AudioClip>();
+        seDict.Add("日没", ses[0]);
     }
 
     #region 文字処理メソッド
     bool EndEvent(string text)//[e]
     {
-        UpdateStatus(text);
         if (GetEventSet(false))
         {
             InitializeLoadMessage(true);
@@ -272,12 +279,10 @@ public class TextLoader : MonoBehaviour
         else
         {
             Highlight("[l]f");
-            if (text.Length < 4)
-            {
-                UpdateDay();
-            }
+            UpdateDay(text.Length < 4);
             changer.ChangeWin(WinName.ComWin);
         }
+        UpdateStatus(text);
         return true;
     }
 
@@ -584,7 +589,7 @@ public class TextLoader : MonoBehaviour
             + variableDict["最大体力"].value.ToString();
         reachText.text = variableDict["到達度"].value.ToString() + "%";
         dateText.text = variableDict["日数"].value.ToString() + "日目";
-        timeText.text = variableDict["時間"].value.ToString() + ":00";
+        //timeText.text = variableDict["時間"].value.ToString() + ":00";
         tempText.text = variableDict["気温"].value.ToString() + "℃";
         weatherText.text
             = Enum.GetName(typeof(WeatherName), variableDict["天気"].value);
@@ -872,7 +877,8 @@ public class TextLoader : MonoBehaviour
         }
         else
         {
-            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneIndex);
+            GameObject.Find("SceneChanger").
+                GetComponent<SceneChanger>().OnChangeScene(sceneIndex);
         }
         return true;
     }
@@ -922,23 +928,29 @@ public class TextLoader : MonoBehaviour
     #endregion
 
     #region 文字処理補助メソッド
-    void UpdateDay()
+    void UpdateDay(bool nextDay)
     {
-        UserData.instance.day.value++;
-        if (UnityEngine.Random.value < 0.1f + UserData.instance.reach.value * 0.7f
-            + UserData.instance.day.value * 0.1f)
+        if(nextDay)
         {
-            UserData.instance.weatherIndex.value += UnityEngine.Random.Range(-1, 2);
-            if (UserData.instance.weatherIndex.value < 0
-                || 2 < UserData.instance.weatherIndex.value)
+            UserData.instance.day.value++;
+            if (UnityEngine.Random.value < 0.1f + UserData.instance.reach.value * 0.7f
+                + UserData.instance.day.value * 0.1f)
             {
-                UserData.instance.weatherIndex.value = 1;
+                UserData.instance.weatherIndex.value += UnityEngine.Random.Range(-1, 2);
+                if (UserData.instance.weatherIndex.value < 0
+                    || 2 < UserData.instance.weatherIndex.value)
+                {
+                    UserData.instance.weatherIndex.value = 1;
+                }
             }
+
+            UserData.instance.temperature.value
+                = 30 - (int)(UserData.instance.reach.value * 0.4f
+                + UnityEngine.Random.Range(-2 - UserData.instance.weatherIndex.value, 3)
+                + UserData.instance.day.value * 0.2f);
+
+            audioSource.PlayOneShot(seDict["日没"]);
         }
-        UserData.instance.temperature.value
-            = 30 - (int)(UserData.instance.reach.value * 0.4f
-            + UnityEngine.Random.Range(-2 - UserData.instance.weatherIndex.value, 3)
-            + UserData.instance.day.value * 0.2f);
 
         if (UserData.instance.reach.value < 30)
         {
@@ -956,7 +968,14 @@ public class TextLoader : MonoBehaviour
             reachText.color = new Color(1, 0.5f, 0);
         }
 
-        UpdateStatus("");
+        if (UserData.instance.reach.value < 50)
+        {
+            UpdateBGM(bgmDict["山1"]);
+        }
+        else
+        {
+            UpdateBGM(bgmDict["山2"]);
+        }
     }
 
     bool GetEventSet(bool onRandom = true)//条件に合う定期イベント呼び出し、無ければランダムイベント
@@ -1116,6 +1135,15 @@ public class TextLoader : MonoBehaviour
         float height = image.rectTransform.sizeDelta.y;
         Debug.Log(height);
         image.rectTransform.sizeDelta = new Vector2(height * rate, height);
+    }
+
+    void UpdateBGM(AudioClip clip)
+    {
+        if (audioSource.clip != clip)
+        {
+            audioSource.clip = clip;
+            audioSource.Play();
+        }
     }
     #endregion
 }

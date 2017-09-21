@@ -40,7 +40,7 @@ public class UserData
         day = new IntVariable(1);
         hour = new IntVariable(9);
         reach = new IntVariable(0);
-        karman = new IntVariable(45);//初期値40
+        karman = new IntVariable(45);//初期値45
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(30);
         weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
@@ -75,7 +75,7 @@ public class UserData
 
     public static bool Save(UserData target)
     {
-        string prefKey = Application.dataPath+"/savedata.dat";
+        string prefKey = Application.dataPath + "/savedata.dat";
         MemoryStream memoryStream = new MemoryStream();
 #if UNITY_IPHONE || UNITY_IOS
 		System.Environment.SetEnvironmentVariable("MONO_REFLECTION_SERIALIZER", "yes");

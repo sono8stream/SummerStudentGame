@@ -23,7 +23,8 @@ public class PhaseChanger : MonoBehaviour
         
         if(Input.GetKeyDown(KeyCode.Escape))
         {
-            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(0);
+            GameObject.Find("SceneChanger").
+                   GetComponent<SceneChanger>().OnChangeScene(0);
         }
     }
 

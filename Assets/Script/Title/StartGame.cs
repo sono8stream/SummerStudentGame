@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StartGame : MonoBehaviour {
+public class StartGame : MonoBehaviour
+{
+    [SerializeField]
+    SceneChanger changer;
 
     // Use this for initialization
     void Start()
@@ -12,19 +15,14 @@ public class StartGame : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             UserData.instance = UserData.Load();
-            ChangeScene();
+            changer.OnChangeScene(1);
         }
         if (Input.GetKey(KeyCode.Z))
         {
-            ChangeScene();
+            changer.OnChangeScene(1);
         }
-    }
-
-    public void ChangeScene()
-    {
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(1);
     }
 }

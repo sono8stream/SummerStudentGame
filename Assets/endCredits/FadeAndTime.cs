@@ -49,8 +49,10 @@ public class FadeAndTime : MonoBehaviour {
 		}
 		if (scene == 7) {
 			if (time > 0) {	//凝りどころ
-				if(Input.GetKey(KeyCode.Space)) Application.LoadLevel ("title");
-			}
+				if(Input.GetKey(KeyCode.Space))
+                    GameObject.Find("SceneChanger").
+                           GetComponent<SceneChanger>().OnChangeScene(0);
+            }
 		}
 	}
 
