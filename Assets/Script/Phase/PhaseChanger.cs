@@ -20,6 +20,11 @@ public class PhaseChanger : MonoBehaviour
         {
             ChangeWin(WinName.LogWin);
         }
+        
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(0);
+        }
     }
 
     public void ChangeWin(WinName changeName,bool on=true)

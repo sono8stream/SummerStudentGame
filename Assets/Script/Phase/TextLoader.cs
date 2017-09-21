@@ -71,7 +71,6 @@ public class TextLoader : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        UserData.instance = UserData.Load();
         messageText.text = "";
         InitializeRE();
         InitializeVD();
@@ -718,6 +717,7 @@ public class TextLoader : MonoBehaviour
             switch(elem[1])
             {
                 case "主人公":
+                case "化け物":
                     name = PLAYER_NAME;
                     break;
                 case "妹":
@@ -741,12 +741,14 @@ public class TextLoader : MonoBehaviour
             }
 
             charaTemp2.sprite = charaSpDict[elem[1]];
+            AdjustImageSize(charaTemp2);
             fadeLim = int.Parse(elem[2]);
         }
         else if (fadeCnt == fadeLim)
         {
             charaTemp.sprite = charaTemp2.sprite;
             charaTemp.color = Color.white;
+            AdjustImageSize(charaTemp);
             charaTemp2.color = new Color(1, 1, 1, 0);
             fadeCnt = 0;
             return true;
@@ -1079,6 +1081,8 @@ public class TextLoader : MonoBehaviour
     {
         Color c = on ? Color.red : Color.white;
         choicesT.GetChild(selectIndex).GetComponent<Image>().color = c;
+        choicesT.GetChild(selectIndex).GetComponent<RectTransform>().localScale
+            = on ? new Vector3(1.06f, 1.2f) : Vector3.one;
     }
 
     void JumpIndex(string text)//特定のラベルまでジャンプします,[j]
@@ -1096,7 +1100,22 @@ public class TextLoader : MonoBehaviour
 
     void HideWin()
     {
-        messageText.transform.parent.gameObject.SetActive(!Input.GetKey(KeyCode.Z));
+        bool on = !Input.GetKey(KeyCode.Z);
+        foreach (Transform t in transform)
+        {
+            t.gameObject.SetActive(on);
+        }
+        GetComponent<Image>().enabled = on;
+    }
+
+    void AdjustImageSize(Image image)
+    {
+        Sprite s = image.sprite;
+        float rate = s.texture.width / (float)s.texture.height;
+        Debug.Log(rate);
+        float height = image.rectTransform.sizeDelta.y;
+        Debug.Log(height);
+        image.rectTransform.sizeDelta = new Vector2(height * rate, height);
     }
     #endregion
 }

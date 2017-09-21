@@ -14,6 +14,11 @@ public class StartGame : MonoBehaviour {
     {
         if(Input.GetKeyDown(KeyCode.Space))
         {
+            UserData.instance = UserData.Load();
+            ChangeScene();
+        }
+        if (Input.GetKey(KeyCode.Z))
+        {
             ChangeScene();
         }
     }

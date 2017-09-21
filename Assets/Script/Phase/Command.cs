@@ -72,6 +72,8 @@ public class Command : MonoBehaviour {
     {
         Color c = on ? Color.red : Color.white;
         transform.GetChild(selectIndex).GetComponent<Image>().color = c;
+        transform.GetChild(selectIndex).GetComponent<RectTransform>().localScale
+            = on ? new Vector3(1.14f, 1.15f) : Vector3.one;
     }
     
     public void CommandClick(int no)

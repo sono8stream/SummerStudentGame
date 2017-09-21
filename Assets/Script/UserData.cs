@@ -40,7 +40,7 @@ public class UserData
         day = new IntVariable(1);
         hour = new IntVariable(9);
         reach = new IntVariable(0);
-        karman = new IntVariable(40);//初期値40
+        karman = new IntVariable(45);//初期値40
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(30);
         weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
