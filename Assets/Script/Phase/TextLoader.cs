@@ -15,7 +15,7 @@ public class TextLoader : MonoBehaviour
     [SerializeField]
     Logger logger;
     [SerializeField]
-    TextAsset summit, ending, over;
+    TextAsset summit, ending, over, limit;
     [SerializeField]
     TextAsset[] randomEvents;
 
@@ -987,6 +987,10 @@ public class TextLoader : MonoBehaviour
         else if (UserData.mReach <= UserData.instance.reach.value)
         {
             textSet = textSet == summit ? ending : summit;//頂上、エンディングイベント
+        }
+        else if(UserData.instance.day.value==50)
+        {
+            textSet = limit;
         }
         else if (onRandom && UnityEngine.Random.value < 0.45f)
         {
