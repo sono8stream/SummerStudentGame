@@ -22,7 +22,7 @@ public class TextList : MonoBehaviour {
 		switch (FadeAndTime.scene) {
 		case 1:
 			transform.localPosition = center;
-			text.text = "~ ニンブパラク ~\nींबू की परीक्षा\n\n制作:\nkawaz学生部\n創作活動部";
+			text.text = "~ ニンブパラク ~\nींबू की परीक्षा\n\n制作:\n\n";
 			break;
 		case 2:
 			transform.localPosition = pr;
