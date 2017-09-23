@@ -20,9 +20,9 @@ public class UserData
     public List<IntVariable> flagList;
     public const int flags = 12;//休む2回目*8,身分変化*4,コマンド初回*4
 
-    public static UserData instance = new UserData();
+    public static UserData instance;
 
-    private UserData()
+    public UserData()
     {
         flagList = new List<IntVariable>();
         for (int i = 0; i < flags; i++)
@@ -40,10 +40,10 @@ public class UserData
         day = new IntVariable(1);
         hour = new IntVariable(9);
         reach = new IntVariable(0);
-        karman = new IntVariable(45);//初期値45
+        karman = new IntVariable(50);//初期値45
         caste = new IntVariable((int)CasteName.アチュート);
         temperature = new IntVariable(30);
-        weatherIndex = new IntVariable(Random.Range(0, 3));//段階を追って変化
+        weatherIndex = new IntVariable(0);//段階を追って変化
 
         InitializeItem();
         for (int i = 8; i < 11; i++)
@@ -98,7 +98,10 @@ public class UserData
     public static UserData Load()
     {
         string prefKey = Application.dataPath + "/savedata.dat";
-        if (!PlayerPrefs.HasKey(prefKey)) return new UserData();
+        if (!PlayerPrefs.HasKey(prefKey))
+        {
+            return null;
+        }
 #if UNITY_IPHONE || UNITY_IOS
 		System.Environment.SetEnvironmentVariable("MONO_REFLECTION_SERIALIZER", "yes");
 #endif
@@ -108,7 +111,7 @@ public class UserData
         MemoryStream dataStream
             = new MemoryStream(System.Convert.FromBase64String(serializedData));
         UserData data = (UserData)bf.Deserialize(dataStream);
-
+        
         return data;
     }
 }

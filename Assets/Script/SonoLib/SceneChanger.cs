@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,13 +10,13 @@ public class SceneChanger : MonoBehaviour
     bool on;
     int sceneIndex;
     Waiter fadeWaiter, stateWaiter;
-    Image fadeImage;
+    Image[] fadeImages;
 
     private void Awake()
     {
         fadeWaiter = new Waiter(10);
         stateWaiter = new Waiter(3);
-        fadeImage = transform.GetComponentInChildren<Image>();
+        fadeImages = transform.GetComponentsInChildren<Image>();
         DontDestroyOnLoad(gameObject);
     }
 
@@ -65,8 +66,6 @@ public class SceneChanger : MonoBehaviour
                 }
                 break;
         }
-        Debug.Log(fadeWaiter.Count);
-        Debug.Log(stateWaiter.Count);
         return stateWaiter.Wait(false);
     }
 
@@ -75,8 +74,10 @@ public class SceneChanger : MonoBehaviour
         fadeWaiter.Wait();
         float alpha = off ? 1 - fadeWaiter.Count / (float)fadeWaiter.Limit
             : fadeWaiter.Count / (float)fadeWaiter.Limit;
-        fadeImage.color = new Color(0, 0, 0, alpha);
-        Debug.Log(fadeImage.color);
+        foreach(Image i in fadeImages)
+        {
+            i.color= new Color(1, 1, 1, alpha);
+        }
         return fadeWaiter.Wait(false);
     }
 }

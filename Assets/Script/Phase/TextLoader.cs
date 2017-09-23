@@ -633,11 +633,13 @@ public class TextLoader : MonoBehaviour
                 rightChara.color = Color.gray;
                 leftChara.color = Color.gray;
                 charaNameT.localPosition = new Vector2(-pos.x + 1000, pos.y);
+                logger.AddText("\r\n");
                 break;
             case 'f':
                 rightChara.color = Color.white;
                 leftChara.color = Color.white;
                 charaNameT.localPosition = new Vector2(-pos.x + 1000, pos.y);
+                logger.AddText("\r\n");
                 break;
         }
         return true;
@@ -723,6 +725,7 @@ public class TextLoader : MonoBehaviour
             {
                 case "主人公":
                 case "化け物":
+                case "消去":
                     name = PLAYER_NAME;
                     break;
                 case "妹":
@@ -873,6 +876,7 @@ public class TextLoader : MonoBehaviour
         if (sceneIndex == 1)
         {
             UserData.instance.InitializeData();
+            InitializeVD();
             EndEvent("[e]戻る");
         }
         else
@@ -950,6 +954,22 @@ public class TextLoader : MonoBehaviour
                 + UserData.instance.day.value * 0.2f);
 
             audioSource.PlayOneShot(seDict["日没"]);
+        }
+
+        if (UserData.instance.reach.value < 30)
+        {
+            ChangeBackSprite("[b]入口:0");
+            reachText.color = Color.white;
+        }
+        else if (UserData.instance.reach.value < 70)
+        {
+            ChangeBackSprite("[b]山中:0");
+            reachText.color = new Color(1, 0.9f, 0.7f);
+        }
+        else
+        {
+            ChangeBackSprite("[b]山頂:0");
+            reachText.color = new Color(1, 0.5f, 0);
         }
 
         if (UserData.instance.reach.value < 30)
