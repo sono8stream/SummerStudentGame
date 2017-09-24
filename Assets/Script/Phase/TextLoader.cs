@@ -252,6 +252,7 @@ public class TextLoader : MonoBehaviour
         charaSpDict.Add("レモン教徒", charaSprites[7]);
         charaSpDict.Add("女神", charaSprites[8]);
         charaSpDict.Add("化け物", charaSprites[9]);
+        charaSpDict.Add("男性", charaSprites[0]);
     }
 
     void InitializeBmD()
@@ -595,6 +596,38 @@ public class TextLoader : MonoBehaviour
         tempText.text = variableDict["気温"].value.ToString() + "℃";
         weatherText.text
             = Enum.GetName(typeof(WeatherName), variableDict["天気"].value);
+
+        if (UserData.instance.reach.value < 30)
+        {
+            ChangeBackSprite("[b]入口:0");
+            reachText.color = Color.white;
+            UpdateBGM(bgmDict["山1"]);
+        }
+        else if (UserData.instance.reach.value < 70)
+        {
+            ChangeBackSprite("[b]山中:0");
+            reachText.color = new Color(1, 0.9f, 0.7f);
+            UpdateBGM(bgmDict["山1"]);
+        }
+        else
+        {
+            ChangeBackSprite("[b]山頂:0");
+            reachText.color = new Color(1, 0.5f, 0);
+            UpdateBGM(bgmDict["山2"]);
+        }
+
+        if (UserData.instance.hp.value < 20)
+        {
+            stamText.color = new Color(1, 0.25f, 0);
+        }
+        else if (UserData.instance.hp.value < 50)
+        {
+            stamText.color = new Color(1, 0.5f, 0);
+        }
+        else
+        {
+            stamText.color = Color.white;
+        }
         return true;
     }
 
@@ -680,7 +713,6 @@ public class TextLoader : MonoBehaviour
             if (elem.Length == 4) { t += elem[3]; }
             JumpIndex(t);
         }
-        Debug.Log(val1);
         return true;
     }
 
@@ -720,8 +752,9 @@ public class TextLoader : MonoBehaviour
         if (fadeCnt == 0)
         {
             string[] elem = text.Substring(3).Split(':');
+            Debug.Log(elem[1]);
             if (!charaSpDict.ContainsKey(elem[1])) { return true; }
-
+            Debug.Log("HasKey");
             string name;
             switch(elem[1])
             {
@@ -959,38 +992,6 @@ public class TextLoader : MonoBehaviour
                 + UserData.instance.day.value * 0.2f);
 
             audioSource.PlayOneShot(seDict["日没"]);
-        }
-
-        if (UserData.instance.reach.value < 30)
-        {
-            ChangeBackSprite("[b]入口:0");
-            reachText.color = Color.white;
-            UpdateBGM(bgmDict["山1"]);
-        }
-        else if (UserData.instance.reach.value < 70)
-        {
-            ChangeBackSprite("[b]山中:0");
-            reachText.color = new Color(1, 0.9f, 0.7f);
-            UpdateBGM(bgmDict["山1"]);
-        }
-        else
-        {
-            ChangeBackSprite("[b]山頂:0");
-            reachText.color = new Color(1, 0.5f, 0);
-            UpdateBGM(bgmDict["山2"]);
-        }
-
-        if (UserData.instance.hp.value < 20)
-        {
-            stamText.color = new Color(1, 0.25f, 0);
-        }
-        else if (UserData.instance.hp.value < 50)
-        {
-            stamText.color = new Color(1, 0.5f, 0);
-        }
-        else
-        {
-            stamText.color = Color.white;
         }
     }
 
