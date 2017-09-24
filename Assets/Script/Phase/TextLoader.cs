@@ -257,9 +257,11 @@ public class TextLoader : MonoBehaviour
     void InitializeBmD()
     {
         bgmDict = new Dictionary<string, AudioClip>();
-        bgmDict.Add("山1", bgms[0]);
-        bgmDict.Add("山2", bgms[1]);
-        bgmDict.Add("緊張", bgms[2]);
+        bgmDict.Add("無し", bgms[0]);
+        bgmDict.Add("山1", bgms[1]);
+        bgmDict.Add("山2", bgms[2]);
+        bgmDict.Add("緊張", bgms[3]);
+        bgmDict.Add("TrueEnd", bgms[4]);
 
     }
 
@@ -769,14 +771,17 @@ public class TextLoader : MonoBehaviour
         return false;
     }
 
-    bool ChangeBgm(string text)
+    bool ChangeBgm(string text)//[o]
     {
         if (!bgmDict.ContainsKey(text.Substring(3)))
         {
             return true;
         }
         audioSource.clip = bgmDict[text.Substring(3)];
-        audioSource.Play();
+        if (audioSource.clip != null)
+        {
+            audioSource.Play();
+        }
         return true;
     }
 
@@ -960,16 +965,19 @@ public class TextLoader : MonoBehaviour
         {
             ChangeBackSprite("[b]入口:0");
             reachText.color = Color.white;
+            UpdateBGM(bgmDict["山1"]);
         }
         else if (UserData.instance.reach.value < 70)
         {
             ChangeBackSprite("[b]山中:0");
             reachText.color = new Color(1, 0.9f, 0.7f);
+            UpdateBGM(bgmDict["山1"]);
         }
         else
         {
             ChangeBackSprite("[b]山頂:0");
             reachText.color = new Color(1, 0.5f, 0);
+            UpdateBGM(bgmDict["山2"]);
         }
 
         if (UserData.instance.hp.value < 20)
@@ -980,14 +988,9 @@ public class TextLoader : MonoBehaviour
         {
             stamText.color = new Color(1, 0.5f, 0);
         }
-
-        if (UserData.instance.reach.value < 50)
-        {
-            UpdateBGM(bgmDict["山1"]);
-        }
         else
         {
-            UpdateBGM(bgmDict["山2"]);
+            stamText.color = Color.white;
         }
     }
 
