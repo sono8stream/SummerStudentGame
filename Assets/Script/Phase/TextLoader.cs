@@ -972,20 +972,13 @@ public class TextLoader : MonoBehaviour
             reachText.color = new Color(1, 0.5f, 0);
         }
 
-        if (UserData.instance.reach.value < 30)
+        if (UserData.instance.hp.value < 20)
         {
-            ChangeBackSprite("[b]入口:0");
-            reachText.color = Color.white;
+            stamText.color = new Color(1, 0.25f, 0);
         }
-        else if (UserData.instance.reach.value < 70)
+        else if (UserData.instance.hp.value < 50)
         {
-            ChangeBackSprite("[b]山中:0");
-            reachText.color = new Color(1, 0.9f, 0.7f);
-        }
-        else
-        {
-            ChangeBackSprite("[b]山頂:0");
-            reachText.color = new Color(1, 0.5f, 0);
+            stamText.color = new Color(1, 0.5f, 0);
         }
 
         if (UserData.instance.reach.value < 50)

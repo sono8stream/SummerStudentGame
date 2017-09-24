@@ -18,7 +18,7 @@ public class UserData
     public IntVariable weatherIndex;//段階を追って変化
     public List<Item> itemList;//アイテム、個数
     public List<IntVariable> flagList;
-    public const int flags = 12;//休む2回目*8,身分変化*4,コマンド初回*4
+    public const int flags = 16;//休む2回目*8,身分変化*4,コマンド初回*4
 
     public static UserData instance;
 
