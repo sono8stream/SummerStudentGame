@@ -48,7 +48,7 @@ public class UserData
         InitializeItem();
         for (int i = 8; i < 11; i++)
         {
-            flagList[i].value = 1;
+            flagList[i].value = 0;
         }
     }
 

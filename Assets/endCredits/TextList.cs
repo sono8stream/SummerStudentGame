@@ -46,7 +46,7 @@ public class TextList : MonoBehaviour {
 			break;
 		case 7:
 			transform.localPosition = pl;
-			text.text = "THENK YOU\nFOR\nPLAYING.\n\n\n  Press space key.";
+			text.text = "THANK YOU\nFOR\nPLAYING.\n\n\n  Press space key.";
 			break;
 		}
 	}
